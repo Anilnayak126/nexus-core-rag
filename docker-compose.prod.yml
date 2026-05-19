@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector for production
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: nexus-postgres-prod
+    environment:
+      POSTGRES_DB: nexus_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Production FastAPI backend
+  backend:
+    image: ${ECR_REPOSITORY}:latest
+    container_name: nexus-backend-prod
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/nexus_db
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - LLM_MODEL=${LLM_MODEL}
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - mlflow
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # MLflow for production
+  mlflow:
+    image: mlflow/mlflow:latest
+    container_name: nexus-mlflow-prod
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_URI}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_ARTIFACT_ROOT}
+    volumes:
+      - ${MLFLOW_DATA_PATH}:/mlflow
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+
+  # Redis for production
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis-prod
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nexus-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # React Frontend (served by Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: nexus-frontend-prod
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
