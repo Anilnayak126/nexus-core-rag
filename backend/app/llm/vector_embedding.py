@@ -14,7 +14,7 @@ import asyncpg
 from sentence_transformers import SentenceTransformer
 from dataclasses import dataclass
 import time
-import redis
+import redis.asyncio as redis
 import json
 
 # Configure logging
@@ -53,6 +53,7 @@ class VectorEmbeddingPipeline:
             similarity_threshold: Minimum similarity threshold for results
         """
         self.db_url = db_url
+        self.redis_url = redis_url
         self.pool = None
         self.redis_client = None
         self.embedding_model = SentenceTransformer(embedding_model_name)
