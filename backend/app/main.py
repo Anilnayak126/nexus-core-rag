@@ -7,7 +7,7 @@ from app.services.document_service import DocumentService
 from app.services.query_service import QueryService
 from app.services.evaluation_service import EvaluationService
 from app.services.vector_service import VectorService
-from app.config import settings
+from app.core.config import settings
 
 app = FastAPI(
     title="Nexus Knowledge Engine API",
