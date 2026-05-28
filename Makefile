@@ -1,0 +1,96 @@
+.PHONY: up-dev up-team down-dev down-team dev-up dev-down team-up team-down logs-dev logs-team up dev-seed dev-bootstrap
+
+# DEV ENVIRONMENT — full bootstrap (build + start + seed dev/CI demo data).
+# Use this for first-time setup or after a `make dev-down`. Containers will
+# be wiped clean. On first boot the Postgres container auto-applies
+# init_db.sql (mounted into /docker-entrypoint-initdb.d/) — the complete
+# schema plus the clean production seed. Then `dev-seed` layers the dev/CI
+# demo data (users, requisitions, plates, etc.) plus the RBAC role grants
+# from migrations/seed_test_data.sql so the UI has meaningful data to test.
+dev-up: dev-bootstrap
+
+# Internal target — orchestrates the full first-run bootstrap. End users
+# call `make dev-up` (above) which depends on this.
+dev-bootstrap:
+	@echo "▶ Building images & starting containers..."
+	docker compose -p dev -f docker-compose.dev.yml --env-file .env.dev up -d --build
+	@echo "▶ Waiting for Postgres to accept connections..."
+	@for i in $$(seq 1 30); do \
+	  docker exec nexus-vector-db pg_isready -U admin -d nexus_knowledge >/dev/null 2>&1 && break; \
+	  sleep 1; \
+	done
+	@echo "▶ Waiting for API container to come up..."
+	@for i in $$(seq 1 60); do \
+	  docker exec nexus-api curl -fs http://localhost:8000/health >/dev/null 2>&1 && break; \
+	  sleep 1; \
+	done
+	@$(MAKE) --no-print-directory dev-seed
+	@echo ""
+	@echo "✅ Backend stack ready."
+	@echo "   API docs  → http://localhost:8002/docs"
+	@echo "   pgAdmin   → http://localhost:5051"
+	@echo "   Redis     → http://localhost:6380"
+	@echo "   Login     → admin / password"
+	@echo ""
+	@echo "Next: start the frontend in a separate shell:"
+	@echo "   cd ../frontend && npm install && npm run dev"
+	@echo "   then open http://localhost:5173"
+
+dev-down:
+	docker compose -p dev -f docker-compose.dev.yml --env-file .env.dev down -v
+
+# TEAM ENVIRONMENT (full destroy)
+team-up:
+	docker compose -p team -f docker-compose.yml --env-file .env.team up -d
+
+team-down:
+	docker compose -p team -f docker-compose.yml --env-file .env.team down -v
+
+
+# ------------------------------
+# NON-DESTRUCTIVE COMMANDS (NO REBUILD)
+# ------------------------------
+
+# Start ONLY DEV (no rebuild)
+up-dev:
+	docker compose -p dev -f docker-compose.dev.yml up -d
+	@echo "🚀 DEV started without rebuild."
+
+# Start ONLY TEAM (no rebuild)
+up-team:
+	docker compose -p team -f docker-compose.yml up -d
+	@echo "🚀 TEAM started without rebuild."
+
+# Start BOTH (no rebuild)
+up: up-dev up-team
+	@echo "🚀 DEV & TEAM started without rebuild."
+
+
+# ------------------------------
+# NON-DESTRUCTIVE DOWN COMMANDS
+# ------------------------------
+down-dev:
+	docker compose -p dev -f docker-compose.dev.yml down
+	@echo "🛑 DEV stopped (volumes preserved)."
+
+down-team:
+	docker compose -p team -f docker-compose.yml down
+	@echo "🛑 TEAM stopped (volumes preserved)."
+
+
+# Apply the dev/CI test-data seed to an existing dev container. The schema
+# and clean production seed are already in place from init_db.sql (auto-applied
+# by the Postgres container entrypoint on first boot). This layers all dev/CI
+# demo data (Section 1) plus the RBAC role-grant block.
+# Uses stdin piping (docker exec -i) because bind-mounted files are unreliable on macOS VirtioFS.
+dev-seed:
+	@echo "Applying dev/CI test-data seed..."
+	docker exec -i nexus-vector-db psql -U admin -d nexus_knowledge < backend/scripts/seed_test_data.sql
+	@echo "  ✓ test-data seed applied"
+
+# LOGS
+logs-dev:
+	docker compose -p dev -f docker-compose.dev.yml logs -f
+
+logs-team:
+	docker compose -p team -f docker-compose.yml logs -f
