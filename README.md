@@ -61,34 +61,36 @@ Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) syst
 ```mermaid
 flowchart LR
   Client[Client / Frontend] --> API[FastAPI Backend]
-  API --> Postgres[(PostgreSQL + pgvector)]
+  API --> PG[(PostgreSQL + pgvector)]
   API --> Redis[(Redis Cache)]
   API --> MLflow[MLflow Tracking]
-  API --> LLM[LLM Model]
-  Postgres --> Chunks[(document_chunks<br/>vector(384) + HNSW)]
-  Postgres --> Docs[(documents<br/>metadata + timestamps)]
+  API --> LLM[LLM Service]
+  PG --> Chunks[document_chunks - vector(384) HNSW]
+  PG --> Docs[documents - metadata & timestamps]
 ```
 
 ## Project Structure
 
 ```text
 nexus/
+  ai/                           -- AI/ML components (models, pipelines, RAG)
   backend/
     app/
-      api/          -- FastAPI route handlers
-      core/         -- Config, security, exceptions
-      db/           -- Database session and models
-      llm/          -- Document ingestion, embeddings, query pipeline
-      ml/           -- MLflow client integration
-      services/     -- Business logic layer
-    tests/          -- Backend test suite
-    scripts/        -- Utility scripts
-  frontend/         -- React frontend (planned)
-  mlflow/           -- MLflow experiment data
-  config/           -- YAML configuration files
-  docker/           -- Dockerfiles
-  docs/             -- API and deployment documentation
-  scripts/          -- Setup and deployment scripts
+      api/routes/               -- FastAPI route handlers
+      core/                     -- Config, security, exceptions
+      db/                       -- SQLAlchemy models and session
+      llm/                      -- Document ingestion, embeddings, query pipeline
+      ml/                       -- MLflow client integration
+      services/                 -- Business logic layer
+      main.py                   -- Application entry point
+    tests/                      -- Backend test suite
+    scripts/                    -- Utility scripts (seed data, etc.)
+  config/                       -- YAML configuration files
+  frontend/                     -- React frontend (placeholder)
+  mlops/                        -- MLflow experiment data
+  scripts/                      -- Setup and deployment scripts
+  tests/                        -- Integration and e2e tests
+  docs/                         -- API, deployment, development docs
   docker-compose.dev.yml
   docker-compose.prod.yml
   Makefile
