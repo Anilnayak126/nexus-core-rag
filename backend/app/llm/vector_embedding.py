@@ -53,6 +53,7 @@ class VectorEmbeddingPipeline:
             similarity_threshold: Minimum similarity threshold for results
         """
         self.db_url = db_url
+        self.redis_url = redis_url
         self.pool = None
         self.redis_client = None
         self.embedding_model = SentenceTransformer(embedding_model_name)
