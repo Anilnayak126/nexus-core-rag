@@ -1,7 +1,7 @@
 import os
 import fitz  # PyMuPDF
 from typing import Dict, List
-from app.config import settings
+from app.core.config import settings
 import logging
 from app.services.vector_service import VectorService
 

@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/nexus_db"
+    DATABASE_URL: str = "postgresql://admin:supersecretpassword@vector_db:5432/nexus_knowledge"
     
     # Embedding model
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     models_dir: str = "models"
     
     # Redis
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://redis:6379"
     
     # MLflow
     MLFLOW_TRACKING_URI: str = "http://localhost:5001"
