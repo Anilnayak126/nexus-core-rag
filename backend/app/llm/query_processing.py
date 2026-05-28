@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import asyncpg
 from sentence_transformers import SentenceTransformer
 from .vector_embedding import VectorEmbeddingPipeline
+from .retrieval_gate import RetrievalGate, GateDecision
 import redis
 from langchain.prompts import PromptTemplate
 
@@ -55,7 +56,8 @@ class QueryProcessingPipeline:
         embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         confidence_threshold: float = 0.7,
         max_tokens: int = 1000,
-        temperature: float = 0.1
+        temperature: float = 0.1,
+        mlflow_client: Optional[object] = None,
     ):
         """
         Initialize the query processing pipeline.
@@ -68,6 +70,7 @@ class QueryProcessingPipeline:
             confidence_threshold: Minimum confidence threshold
             max_tokens: Maximum tokens for LLM response
             temperature: LLM temperature
+            mlflow_client: Optional MLflow client for telemetry
         """
         self.db_url = db_url
         self.redis_client = None
@@ -77,6 +80,7 @@ class QueryProcessingPipeline:
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.query_id_counter = 0
+        self.mlflow = mlflow_client
         
         # Initialize components
         self.vector_pipeline = VectorEmbeddingPipeline(
@@ -84,6 +88,9 @@ class QueryProcessingPipeline:
             redis_url=redis_url,
             embedding_model_name=embedding_model_name
         )
+        
+        # Retrieval Gate — blocks hallucinations
+        self.retrieval_gate = RetrievalGate(min_confidence=0.5)
         
         # Initialize Redis for query caching
         self.redis_client = redis.from_url(redis_url)
@@ -95,47 +102,66 @@ class QueryProcessingPipeline:
     async def process_query(self, query: str, user_id: Optional[str] = None) -> QueryResult:
         """
         Process a user query and return an answer.
-        
+
+        Integrates multi-level semantic caching, retrieval gate safety,
+        and MLflow telemetry.
+
         Args:
             query: User query
             user_id: Optional user ID for tracking
-            
+
         Returns:
             Query result with answer and sources
         """
         start_time = time.time()
         query_id = self._generate_query_id()
-        
+
         try:
-            # Check cache
+            # --- Phase 2 Day 8-9: Semantic Caching ---
             cache_key = f"query:{hash(query)}"
             cached_result = await self.redis_client.get(cache_key)
-            
+
             if cached_result:
-                logger.info(f"Cache hit for query: {query}")
-                return QueryResult(**json.loads(cached_result))
-            
-            # Step 1: Retrieve relevant chunks
+                logger.info("Exact cache hit for query: %s", query)
+                cached = json.loads(cached_result)
+                if self.mlflow:
+                    self.mlflow.log_query_metrics(
+                        query=query,
+                        response_time=0.0,
+                        confidence=cached.get("confidence", 0.0),
+                        sources_count=len(cached.get("sources", [])),
+                        error=False,
+                    )
+                return QueryResult(**cached)
+
+            # Step 1: Retrieve relevant chunks (with semantic cache)
             relevant_chunks = await self.vector_pipeline.search_similar_chunks(
                 query,
-                top_k=5
+                top_k=5,
+                semantic_cache_threshold=0.95,
             )
-            
-            # Step 2: Filter by confidence
-            filtered_chunks = [
-                chunk for chunk in relevant_chunks
-                if chunk.similarity >= self.confidence_threshold
-            ]
-            
-            # Step 3: Generate answer
-            if filtered_chunks:
+
+            # Step 2: Calculate overall confidence
+            raw_confidence = self._calculate_confidence(relevant_chunks) if relevant_chunks else 0.0
+
+            # --- Phase 2 Day 10-11: Retrieval Gate ---
+            gate_decision: GateDecision = self.retrieval_gate.evaluate(
+                relevant_chunks, raw_confidence
+            )
+
+            if gate_decision.passed:
+                filtered_chunks = [
+                    c for c in relevant_chunks
+                    if c.similarity >= self.confidence_threshold
+                ]
                 answer = await self._generate_answer(query, filtered_chunks)
                 confidence = self._calculate_confidence(filtered_chunks)
             else:
-                answer = "I couldn't find relevant information to answer your question."
-                confidence = 0.0
+                logger.info("Retrieval Gate blocked query %s: %s", query_id, gate_decision.reason)
                 filtered_chunks = []
-            
+                answer = gate_decision.reason
+                confidence = 0.0
+
             # Create result
             result = QueryResult(
                 answer=answer,
@@ -144,30 +170,56 @@ class QueryProcessingPipeline:
                         "content": chunk.content,
                         "filename": chunk.filename,
                         "similarity": chunk.similarity,
-                        "chunk_index": chunk.chunk_index
+                        "chunk_index": chunk.chunk_index,
                     }
                     for chunk in filtered_chunks
                 ],
                 confidence=confidence,
                 processing_time=time.time() - start_time,
                 query_id=query_id,
-                timestamp=time.time()
+                timestamp=time.time(),
             )
-            
-            # Cache result
-            await self.redis_client.setex(
-                cache_key,
-                3600,  # 1 hour cache
-                json.dumps(result.__dict__)
-            )
-            
+
+            # Cache result (only for non-blocked queries)
+            if gate_decision.passed:
+                await self.redis_client.setex(
+                    cache_key,
+                    3600,
+                    json.dumps(result.__dict__),
+                )
+
+            # --- Phase 2 Day 12-14: MLflow Telemetry ---
+            if self.mlflow:
+                self.mlflow.log_query_metrics(
+                    query=query,
+                    response_time=result.processing_time,
+                    confidence=result.confidence,
+                    sources_count=len(result.sources),
+                    error=not gate_decision.passed,
+                )
+                if not gate_decision.passed:
+                    self.mlflow.log_retrieval_gate_event(
+                        query=query,
+                        confidence=raw_confidence,
+                        threshold=gate_decision.threshold,
+                        reason=gate_decision.reason,
+                    )
+
             # Log query
             await self._log_query(query, result)
-            
+
             return result
-            
+
         except Exception as e:
-            logger.error(f"Error processing query: {str(e)}")
+            logger.error("Error processing query: %s", str(e))
+            if self.mlflow:
+                self.mlflow.log_query_metrics(
+                    query=query,
+                    response_time=time.time() - start_time,
+                    confidence=0.0,
+                    sources_count=0,
+                    error=True,
+                )
             raise
     
     async def _generate_answer(self, query: str, chunks: List) -> str:

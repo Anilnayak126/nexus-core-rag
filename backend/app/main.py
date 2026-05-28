@@ -8,6 +8,7 @@ import logging
 from app.core.config import settings
 from app.llm.document_ingestion import DocumentIngestionPipeline
 from app.llm.query_processing import QueryProcessingPipeline, QueryResult
+from app.ml.mlflow_client import MLflowClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ app.add_middleware(
 
 document_pipeline: Optional[DocumentIngestionPipeline] = None
 query_pipeline: Optional[QueryProcessingPipeline] = None
+mlflow_client: Optional[MLflowClient] = None
 
 
 class QueryRequest(BaseModel):
@@ -50,7 +52,11 @@ class EvaluationRequest(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    global document_pipeline, query_pipeline
+    global document_pipeline, query_pipeline, mlflow_client
+
+    # Initialize MLflow client for telemetry
+    mlflow_client = MLflowClient()
+    logger.info("MLflow client initialized")
 
     document_pipeline = DocumentIngestionPipeline(
         db_url=settings.DATABASE_URL,
@@ -73,6 +79,7 @@ async def startup_event():
         confidence_threshold=settings.similarity_threshold,
         max_tokens=1000,
         temperature=0.1,
+        mlflow_client=mlflow_client,
     )
     await query_pipeline.initialize()
     logger.info("Query processing pipeline initialized")
@@ -134,11 +141,13 @@ async def health_check():
 @app.get("/metrics")
 async def get_metrics():
     metrics = await query_pipeline.get_query_metrics()
+    gate_stats = query_pipeline.retrieval_gate.get_stats() if query_pipeline else {}
     return {
         "total_queries": metrics.total_queries,
         "average_response_time": metrics.average_response_time,
         "error_rate": metrics.error_rate,
         "average_confidence": metrics.average_confidence,
+        "retrieval_gate": gate_stats,
     }
 
 

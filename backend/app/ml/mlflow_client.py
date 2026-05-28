@@ -21,16 +21,17 @@ class MLflowClient:
     MLflow client for experiment tracking and model management.
     """
     
-    def __init__(self, tracking_uri: Optional[str] = None):
+    def __init__(self, tracking_uri: Optional[str] = None, experiment_name: str = "nexus_knowledge_engine"):
         """
         Initialize MLflow client.
-        
+
         Args:
             tracking_uri: MLflow tracking URI
+            experiment_name: Experiment name (defaults to nexus_knowledge_engine)
         """
         self.tracking_uri = tracking_uri or settings.MLFLOW_TRACKING_URI
         mlflow.set_tracking_uri(self.tracking_uri)
-        self.experiment_name = settings.default_experiment_name
+        self.experiment_name = experiment_name
         
     def get_or_create_experiment(self, experiment_name: str = None) -> str:
         """
@@ -128,6 +129,24 @@ class MLflowClient:
             query_categories = ["factual", "comparison", "procedural", "explanatory"]
             mlflow.log_param("query_category", self._categorize_query(query))
     
+    def log_retrieval_gate_event(self, query: str, confidence: float,
+                                  threshold: float, reason: str):
+        """
+        Log a retrieval gate block event.
+
+        Args:
+            query: The query that was blocked
+            confidence: The confidence score that failed the gate
+            threshold: The minimum confidence threshold
+            reason: Why the gate blocked the query
+        """
+        with self.start_run("retrieval_gate_blocked") as run:
+            mlflow.log_param("query_length", len(query))
+            mlflow.log_param("query_words", len(query.split()))
+            mlflow.log_metric("gate_confidence", confidence)
+            mlflow.log_param("gate_threshold", threshold)
+            mlflow.log_param("gate_reason", reason)
+
     def log_evaluation_metrics(self, evaluation_name: str, metrics: Dict[str, float]):
         """
         Log evaluation metrics.

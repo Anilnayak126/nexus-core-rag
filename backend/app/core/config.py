@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     # Vector search
     similarity_threshold: float = 0.7
     
+    # Semantic cache
+    semantic_cache_threshold: float = 0.95
+    semantic_cache_ttl: int = 3600
+    
+    # Retrieval gate
+    retrieval_gate_min_confidence: float = 0.5
+    
     class Config:
         env_file = ".env"
 
