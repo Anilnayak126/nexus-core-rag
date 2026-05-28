@@ -12,6 +12,19 @@ services:
     volumes:
       - vector_db_data:/var/lib/postgresql/data
 
+  # pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nexus-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5051:80"
+    depends_on:
+      - vector_db
+
   # Redis
   redis:
     image: redis:7-alpine
