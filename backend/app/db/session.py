@@ -61,9 +61,8 @@ def init_db() -> None:
     """
     # Import all models here to ensure they are registered with SQLAlchemy
     # This is necessary for the Base.metadata.create_all() to work properly
-    from app.services.document_service import Document
-    from app.services.vector_service import VectorEmbedding
-    
+    from app.db.models import Document, DocumentChunk
+
     # Create all tables in the database
     Base.metadata.create_all(bind=engine)
     print("Database initialized successfully.")

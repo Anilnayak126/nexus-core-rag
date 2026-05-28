@@ -24,7 +24,7 @@ Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) syst
 | Area | Path | Purpose |
 | --- | --- | --- |
 | Dev environment | [`docker-compose.dev.yml`](docker-compose.dev.yml) | Runs API, PostgreSQL + pgvector, Redis, and pgAdmin |
-| Prod environment | [`docker-compose.prod.yml`](docker-compose.prod.yml) | Production stack with Nginx, MLflow, and frontend |
+| Prod environment | [`docker-compose.prod.yml`](docker-compose.prod.yml) | Production stack with MLflow, Redis, and PostgreSQL |
 | Backend source | [`backend/`](backend/) | FastAPI application with API routes, services, and ML integration |
 | AI pipelines | [`backend/app/llm/`](backend/app/llm/) | Document ingestion, vector embedding, and query processing |
 | MLflow tracking | [`mlflow/`](mlflow/) | Experiment runs, registered models, and artifacts |
@@ -60,35 +60,37 @@ Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) syst
 
 ```mermaid
 flowchart LR
-  Client[Client / Frontend] --> API[FastAPI Backend]
-  API --> Postgres[(PostgreSQL + pgvector)]
-  API --> Redis[(Redis Cache)]
-  API --> MLflow[MLflow Tracking]
-  API --> LLM[LLM Model]
-  Postgres --> Chunks[(document_chunks<br/>vector(384) + HNSW)]
-  Postgres --> Docs[(documents<br/>metadata + timestamps)]
+  Client["Client / Frontend"] --> API["FastAPI Backend"]
+  API --> PG[("PostgreSQL + pgvector")]
+  API --> Redis[("Redis Cache")]
+  API --> MLflow["MLflow Tracking"]
+  API --> LLM["LLM Service"]
+  PG --> Chunks["document_chunks (vector 384 + HNSW)"]
+  PG --> Docs["documents (metadata + timestamps)"]
 ```
 
 ## Project Structure
 
 ```text
 nexus/
+  ai/                           -- AI/ML components (models, pipelines, RAG)
   backend/
     app/
-      api/          -- FastAPI route handlers
-      core/         -- Config, security, exceptions
-      db/           -- Database session and models
-      llm/          -- Document ingestion, embeddings, query pipeline
-      ml/           -- MLflow client integration
-      services/     -- Business logic layer
-    tests/          -- Backend test suite
-    scripts/        -- Utility scripts
-  frontend/         -- React frontend (planned)
-  mlflow/           -- MLflow experiment data
-  config/           -- YAML configuration files
-  docker/           -- Dockerfiles
-  docs/             -- API and deployment documentation
-  scripts/          -- Setup and deployment scripts
+      api/routes/               -- FastAPI route handlers
+      core/                     -- Config, security, exceptions
+      db/                       -- SQLAlchemy models and session
+      llm/                      -- Document ingestion, embeddings, query pipeline
+      ml/                       -- MLflow client integration
+      services/                 -- Business logic layer
+      main.py                   -- Application entry point
+    tests/                      -- Backend test suite
+    scripts/                    -- Utility scripts (seed data, etc.)
+  config/                       -- YAML configuration files
+
+  mlops/                        -- MLflow experiment data
+  scripts/                      -- Setup and deployment scripts
+  tests/                        -- Integration and e2e tests
+  docs/                         -- API, deployment, development docs
   docker-compose.dev.yml
   docker-compose.prod.yml
   Makefile
