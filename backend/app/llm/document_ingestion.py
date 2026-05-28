@@ -90,7 +90,7 @@ class DocumentIngestionPipeline:
                     document_id INTEGER REFERENCES documents(id),
                     chunk_index INTEGER NOT NULL,
                     content TEXT NOT NULL,
-                    embedding VECTOR(384)
+                    embedding VECTOR(384),
                     created_at TIMESTAMP DEFAULT NOW()
                 )
             """)
