@@ -17,6 +17,7 @@ pdfplumber==0.9.0
 sentence-transformers==2.2.2
 torch==2.1.1
 transformers==4.35.2
+huggingface_hub==0.17.3
 
 # Redis
 redis==5.0.1

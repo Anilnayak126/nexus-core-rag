@@ -1,118 +1,111 @@
+from app.core.config import settings
 import numpy as np
-from typing import List, Dict
-import asyncpg
+import redis.asyncio as redis
+import pickle
 import logging
+from typing import List, Dict, Optional
 from sentence_transformers import SentenceTransformer
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 class VectorService:
     def __init__(self):
-        self.model = None
-        self.pool = None
+        self.redis_client = None
+        self.model = SentenceTransformer(settings.EMBEDDING_MODEL)
     
     async def initialize(self):
-        """Initialize embeddings model and database connection"""
-        # Load embedding model
-        self.model = SentenceTransformer(settings.EMBEDDING_MODEL)
-        
-        # Create database connection pool
-        self.pool = await asyncpg.create_pool(
-            settings.DATABASE_URL,
-            min_size=5,
-            max_size=20
-        )
-        
-        # Create vector extension and tables if not exists
-        await self._create_tables()
-    
-    async def _create_tables(self):
-        """Create database tables for vector storage"""
-        async with self.pool.acquire() as conn:
-            # Create vector extension
-            await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
-            
-            # Create documents table
-            await conn.execute("""
-                CREATE TABLE IF NOT EXISTS documents (
-                    id SERIAL PRIMARY KEY,
-                    filename TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT NOW()
-                )
-            """)
-            
-            # Create document_chunks table
-            await conn.execute("""
-                CREATE TABLE IF NOT EXISTS document_chunks (
-                    id SERIAL PRIMARY KEY,
-                    document_id INTEGER REFERENCES documents(id),
-                    chunk_index INTEGER NOT NULL,
-                    content TEXT NOT NULL,
-                    embedding VECTOR(384),  # Adjust based on model
-                    created_at TIMESTAMP DEFAULT NOW()
-                )
-            """)
-            
-            # Create index for similarity search
-            await conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_chunk_embedding 
-                ON document_chunks 
-                USING hnsw (embedding vector_cosine_ops)
-            """)
+        """Initialize the vector service"""
+        try:
+            # Connect to Redis
+            self.redis_client = redis.from_url(settings.REDIS_URL)
+            await self.redis_client.ping()
+            logger.info("Connected to Redis successfully")
+        except Exception as e:
+            logger.error(f"Error connecting to Redis: {str(e)}")
+            raise
     
     async def store_document_chunks(self, file_path: str, chunks: List[str]):
-        """Store document chunks with embeddings in database"""
-        async with self.pool.acquire() as conn:
-            # Get or create document record
-            document_id = await conn.fetchval(
-                "INSERT INTO documents (filename) VALUES ($1) RETURNING id",
-                os.path.basename(file_path)
-            )
-            
-            # Generate embeddings and store chunks
+        """Store document chunks and their embeddings in Redis"""
+        if not self.redis_client:
+            raise RuntimeError("Vector service not initialized")
+        
+        try:
+            # Generate embeddings for all chunks
             embeddings = self.model.encode(chunks)
             
-            for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-                await conn.execute(
-                    """
-                    INSERT INTO document_chunks 
-                    (document_id, chunk_index, content, embedding)
-                    VALUES ($1, $2, $3, $4)
-                    """,
-                    document_id,
-                    i,
-                    chunk,
-                    embedding.tolist()
-                )
-    
-    async def search_similar_chunks(self, query: str, top_k: int = 5) -> List[Dict]:
-        """Search for similar chunks using cosine similarity"""
-        # Generate query embedding
-        query_embedding = self.model.encode([query])[0]
-        
-        async with self.pool.acquire() as conn:
-            # Perform vector similarity search
-            results = await conn.fetch(
-                """
-                SELECT 
-                    dc.content,
-                    d.filename,
-                    1 - (dc.embedding <=> $1) as similarity
-                FROM document_chunks dc
-                JOIN documents d ON dc.document_id = d.id
-                ORDER BY dc.embedding <=> $1
-                LIMIT $2
-                """,
-                query_embedding.tolist(),
-                top_k
-            )
+            # Store in Redis
+            document_key = f"doc:{file_path}"
             
-            return [
-                {
-                    "content": row["content"],
-                    "filename": row["filename"],
-                    "similarity": float(row["similarity"])
-                }
-                for row in results
-            ]
+            # Store chunks and embeddings
+            pipe = self.redis_client.pipeline()
+            for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+                chunk_key = f"{document_key}:chunk:{i}"
+                embedding_key = f"{document_key}:embedding:{i}"
+                
+                # Store chunk text
+                await pipe.hset(chunk_key, mapping={
+                    "text": chunk,
+                    "file_path": file_path,
+                    "chunk_index": str(i)
+                })
+                
+                # Store embedding
+                await pipe.set(embedding_key, pickle.dumps(embedding))
+            
+            await pipe.execute()
+            logger.info(f"Stored {len(chunks)} chunks for {file_path}")
+            
+        except Exception as e:
+            logger.error(f"Error storing document chunks: {str(e)}")
+            raise
+    
+    async def search_similar_chunks(
+        self, 
+        query_embedding: np.ndarray, 
+        top_k: int = 5, 
+        threshold: float = 0.7
+    ) -> List[Dict]:
+        """Search for similar chunks using Redis"""
+        if not self.redis_client:
+            raise RuntimeError("Vector service not initialized")
+        
+        try:
+            # Get all document keys
+            doc_keys = await self.redis_client.keys("doc:*:embedding:*")
+            
+            # Calculate similarities and collect results
+            results = []
+            
+            for embedding_key in doc_keys:
+                # Get embedding
+                stored_embedding_bytes = await self.redis_client.get(embedding_key)
+                if not stored_embedding_bytes:
+                    continue
+                
+                stored_embedding = pickle.loads(stored_embedding_bytes)
+                
+                # Calculate cosine similarity
+                similarity = np.dot(query_embedding, stored_embedding) / (
+                    np.linalg.norm(query_embedding) * np.linalg.norm(stored_embedding)
+                )
+                
+                if similarity >= threshold:
+                    # Get corresponding chunk data
+                    chunk_key = embedding_key.replace(":embedding:", ":chunk:")
+                    chunk_data = await self.redis_client.hgetall(chunk_key)
+                    
+                    if chunk_data:
+                        results.append({
+                            "text": chunk_data.get(b"text", b"").decode("utf-8"),
+                            "file_path": chunk_data.get(b"file_path", b"").decode("utf-8"),
+                            "chunk_index": int(chunk_data.get(b"chunk_index", 0)),
+                            "similarity": float(similarity)
+                        })
+            
+            # Sort by similarity and return top_k
+            results.sort(key=lambda x: x["similarity"], reverse=True)
+            return results[:top_k]
+            
+        except Exception as e:
+            logger.error(f"Error searching similar chunks: {str(e)}")
+            raise
