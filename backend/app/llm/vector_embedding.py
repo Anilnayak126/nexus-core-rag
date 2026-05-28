@@ -14,7 +14,7 @@ import asyncpg
 from sentence_transformers import SentenceTransformer
 from dataclasses import dataclass
 import time
-import redis
+import redis.asyncio as redis
 import json
 
 # Configure logging

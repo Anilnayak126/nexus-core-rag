@@ -17,7 +17,7 @@ import asyncpg
 from sentence_transformers import SentenceTransformer
 from .vector_embedding import VectorEmbeddingPipeline
 from .retrieval_gate import RetrievalGate, GateDecision
-import redis
+import redis.asyncio as redis
 from langchain.prompts import PromptTemplate
 
 # Configure logging
