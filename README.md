@@ -24,7 +24,7 @@ Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) syst
 | Area | Path | Purpose |
 | --- | --- | --- |
 | Dev environment | [`docker-compose.dev.yml`](docker-compose.dev.yml) | Runs API, PostgreSQL + pgvector, Redis, and pgAdmin |
-| Prod environment | [`docker-compose.prod.yml`](docker-compose.prod.yml) | Production stack with Nginx, MLflow, and frontend |
+| Prod environment | [`docker-compose.prod.yml`](docker-compose.prod.yml) | Production stack with MLflow, Redis, and PostgreSQL |
 | Backend source | [`backend/`](backend/) | FastAPI application with API routes, services, and ML integration |
 | AI pipelines | [`backend/app/llm/`](backend/app/llm/) | Document ingestion, vector embedding, and query processing |
 | MLflow tracking | [`mlflow/`](mlflow/) | Experiment runs, registered models, and artifacts |
@@ -60,13 +60,13 @@ Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) syst
 
 ```mermaid
 flowchart LR
-  Client[Client / Frontend] --> API[FastAPI Backend]
-  API --> PG[(PostgreSQL + pgvector)]
-  API --> Redis[(Redis Cache)]
-  API --> MLflow[MLflow Tracking]
-  API --> LLM[LLM Service]
-  PG --> Chunks[document_chunks - vector(384) HNSW]
-  PG --> Docs[documents - metadata & timestamps]
+  Client["Client / Frontend"] --> API["FastAPI Backend"]
+  API --> PG[("PostgreSQL + pgvector")]
+  API --> Redis[("Redis Cache")]
+  API --> MLflow["MLflow Tracking"]
+  API --> LLM["LLM Service"]
+  PG --> Chunks["document_chunks (vector 384 + HNSW)"]
+  PG --> Docs["documents (metadata + timestamps)"]
 ```
 
 ## Project Structure
@@ -86,7 +86,7 @@ nexus/
     tests/                      -- Backend test suite
     scripts/                    -- Utility scripts (seed data, etc.)
   config/                       -- YAML configuration files
-  frontend/                     -- React frontend (placeholder)
+
   mlops/                        -- MLflow experiment data
   scripts/                      -- Setup and deployment scripts
   tests/                        -- Integration and e2e tests
