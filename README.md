@@ -60,13 +60,13 @@ Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) syst
 
 ```mermaid
 flowchart LR
-  Client[Client / Frontend] --> API[FastAPI Backend]
-  API --> PG[(PostgreSQL + pgvector)]
-  API --> Redis[(Redis Cache)]
-  API --> MLflow[MLflow Tracking]
-  API --> LLM[LLM Service]
-  PG --> Chunks[document_chunks - vector(384) HNSW]
-  PG --> Docs[documents - metadata & timestamps]
+  Client["Client / Frontend"] --> API["FastAPI Backend"]
+  API --> PG[("PostgreSQL + pgvector")]
+  API --> Redis[("Redis Cache")]
+  API --> MLflow["MLflow Tracking"]
+  API --> LLM["LLM Service"]
+  PG --> Chunks["document_chunks (vector 384 + HNSW)"]
+  PG --> Docs["documents (metadata + timestamps)"]
 ```
 
 ## Project Structure
