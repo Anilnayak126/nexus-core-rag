@@ -29,7 +29,6 @@ nexus/
 ├── mlops/                           # MLflow experiment tracking data
 │   └── mlflow_config.yml            # (mirrored from config/)
 │
-├── frontend/                        # React frontend (placeholder)
 │
 ├── scripts/                         # Root-level dev/prod scripts
 │   └── setup.sh                     # Local virtual environment setup
@@ -44,7 +43,7 @@ nexus/
 │   └── development/
 │
 ├── docker-compose.dev.yml           # Dev environment (PostgreSQL, Redis, pgAdmin)
-├── docker-compose.prod.yml          # Production stack (Nginx, MLflow, frontend)
+├── docker-compose.prod.yml          # Production stack (MLflow, Redis, PostgreSQL)
 ├── Makefile                         # Dev workflow commands
 ├── .env.dev                         # Dev environment variables
 ├── .gitignore                       # Git ignore rules
