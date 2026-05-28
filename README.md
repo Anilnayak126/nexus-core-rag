@@ -1,346 +1,210 @@
-# Nexus Knowledge Engine - Backend API
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=180&color=0:111827,100:6366f1&text=Nexus%20Knowledge%20Engine&fontColor=ffffff&fontSize=44&fontAlignY=36" alt="Nexus Knowledge Engine banner" />
 
-A production-grade RAG (Retrieval-Augmented Generation) system backend for enterprise knowledge retrieval with LLMOps capabilities.
+  <p><strong>A production-grade RAG backend for enterprise knowledge retrieval with LLMOps capabilities.</strong></p>
 
-## 🚀 Overview
+  <p>
+    <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111827" alt="React" />
+    <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/pgvector-0.7-4169E1?logo=postgresql&logoColor=white" alt="pgvector" />
+    <img src="https://img.shields.io/badge/Redis-7-FF4438?logo=redis&logoColor=white" alt="Redis" />
+    <img src="https://img.shields.io/badge/MLflow-2.16-0194E2?logo=mlflow&logoColor=white" alt="MLflow" />
+    <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose" />
+  </p>
+</div>
 
-The Nexus Knowledge Engine is a sophisticated backend API that provides:
-- **Document Processing**: PDF ingestion, text chunking, and vector embedding generation
-- **Intelligent Querying**: Vector similarity search with confidence scoring
-- **LLMOps Integration**: MLflow experiment tracking, model versioning, and evaluation
-- **Production-Ready**: Containerized architecture with Redis caching and PostgreSQL vector storage
+## Overview
 
-## 🏗️ Architecture
+Nexus Knowledge Engine is a full-stack RAG (Retrieval-Augmented Generation) system where users can upload documents, generate vector embeddings, query a knowledge base, and track experiments with MLflow. The backend is a FastAPI Python API backed by PostgreSQL with pgvector, Redis caching, and MLflow for LLMOps.
 
+## Project Links
+
+| Area | Path | Purpose |
+| --- | --- | --- |
+| Dev environment | [`docker-compose.dev.yml`](docker-compose.dev.yml) | Runs API, PostgreSQL + pgvector, Redis, and pgAdmin |
+| Prod environment | [`docker-compose.prod.yml`](docker-compose.prod.yml) | Production stack with Nginx, MLflow, and frontend |
+| Backend source | [`backend/`](backend/) | FastAPI application with API routes, services, and ML integration |
+| AI pipelines | [`backend/app/llm/`](backend/app/llm/) | Document ingestion, vector embedding, and query processing |
+| MLflow tracking | [`mlflow/`](mlflow/) | Experiment runs, registered models, and artifacts |
+| Project structure | [`project-structure.md`](project-structure.md) | Detailed directory tree and component descriptions |
+
+## Tech Stack
+
+| Layer | Tools |
+| --- | --- |
+| Frontend | React 18, Vite 5 (planned) |
+| Backend | Python 3.11, FastAPI 0.115, Uvicorn, SQLAlchemy 2.0 |
+| Database | PostgreSQL 15 with pgvector extension |
+| Vector search | pgvector HNSW indexes for cosine similarity |
+| Caching | Redis 7 for query result caching |
+| LLMOps | MLflow 2.16 for experiment tracking and model versioning |
+| Embeddings | sentence-transformers (all-MiniLM-L6-v2) |
+| DevOps | Docker, Docker Compose, `.env` configuration |
+
+## Feature Guide
+
+| Feature | Backend area | Notes |
+| --- | --- | --- |
+| Document ingestion | `DocumentIngestion` | PDF text extraction, chunking, and storage |
+| Vector embedding | `VectorEmbedding` | Generate and store 384-dimension embeddings in pgvector |
+| Query processing | `QueryProcessing` | Similarity search with confidence scoring |
+| LLM integration | `config.py`, `llm/` | Configurable LLM models for answer generation |
+| MLflow tracking | `mlflow_client.py` | Experiment logging, model versioning, and evaluation |
+| Document management | `document_service.py` | Upload, list, view, and delete documents |
+| Evaluation | `evaluation_service.py` | Golden dataset testing with metrics |
+| Health monitoring | `/health` endpoint | System health check for container orchestration |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Client[Client / Frontend] --> API[FastAPI Backend]
+  API --> Postgres[(PostgreSQL + pgvector)]
+  API --> Redis[(Redis Cache)]
+  API --> MLflow[MLflow Tracking]
+  API --> LLM[LLM Model]
+  Postgres --> Chunks[(document_chunks<br/>vector(384) + HNSW)]
+  Postgres --> Docs[(documents<br/>metadata + timestamps)]
 ```
+
+## Project Structure
+
+```text
 nexus/
-├── ai/                          # AI/ML related components
-│   ├── models/                  # Pre-trained models and configurations
-│   ├── pipelines/               # ML pipelines for data processing
-│   │   ├── document_ingestion.py
-│   │   ├── vector_embedding.py
-│   │   └── query_processing.py
-│   ├── evaluation/              # Evaluation scripts and metrics
-│   └── rag/                      # RAG-specific components
-├── backend/                     # FastAPI backend
-│   ├── app/
-│   │   ├── api/                 # API endpoints
-│   │   ├── core/                # Core application logic
-│   │   ├── db/                  # Database models and operations
-│   │   ├── ml/                  # ML integration
-│   │   └── services/             # Business logic services
-│   ├── tests/                   # Backend tests
-│   └── scripts/                 # Backend scripts
-├── mlflow/                      # MLflow experiment tracking
-├── config/                      # Configuration files
-├── docker/                      # Docker configurations
-├── scripts/                     # Utility scripts
-├── tests/                      # Integration and e2e tests
-└── docs/                        # Documentation
+  backend/
+    app/
+      api/          -- FastAPI route handlers
+      core/         -- Config, security, exceptions
+      db/           -- Database session and models
+      llm/          -- Document ingestion, embeddings, query pipeline
+      ml/           -- MLflow client integration
+      services/     -- Business logic layer
+    tests/          -- Backend test suite
+    scripts/        -- Utility scripts
+  frontend/         -- React frontend (planned)
+  mlflow/           -- MLflow experiment data
+  config/           -- YAML configuration files
+  docker/           -- Dockerfiles
+  docs/             -- API and deployment documentation
+  scripts/          -- Setup and deployment scripts
+  docker-compose.dev.yml
+  docker-compose.prod.yml
+  Makefile
+  README.md
 ```
 
-## 🛠️ Features
+## Quick Start With Docker
 
-### Core Functionality
-- **Document Ingestion**: Process PDF documents with text extraction and chunking
-- **Vector Embeddings**: Generate and store embeddings using sentence transformers
-- **Similarity Search**: Efficient vector similarity search with pgvector
-- **Query Processing**: Retrieve relevant content and generate answers
-- **Confidence Scoring**: Automated confidence threshold handling
+From the repository root:
 
-### LLMOps Features
-- **MLflow Integration**: Complete experiment tracking and model management
-- **Automated Evaluation**: Golden dataset testing with comprehensive metrics
-- **Model Versioning**: Track and manage different model versions
-- **Performance Monitoring**: Real-time metrics and alerting
-- **Drift Detection**: Monitor model performance and data drift
-
-### Production Features
-- **Containerized**: Docker and Docker Compose for consistent environments
-- **Caching**: Redis for improved response times
-- **Database**: PostgreSQL with pgvector extension
-- **Monitoring**: Comprehensive logging and metrics collection
-- **Scalable**: Designed for horizontal scaling
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.11+
-- Docker & Docker Compose
-- PostgreSQL
-- Redis
-- MLflow (optional)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd nexus
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Start services with Docker Compose**
-   ```bash
-   docker-compose -f docker-compose.dev.yml up -d
-   ```
-
-5. **Initialize the database**
-   ```bash
-   python scripts/init_db.py
-   ```
-
-### Development Setup
-
-1. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   ```
-
-2. **Install development dependencies**
-   ```bash
-   pip install -r requirements-dev.txt
-   ```
-
-3. **Run development server**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-## 📚 API Documentation
-
-### Endpoints
-
-#### Document Management
-- `POST /api/v1/documents/upload` - Upload and process a document
-- `GET /api/v1/documents` - List all documents
-- `GET /api/v1/documents/{document_id}` - Get document details
-- `DELETE /api/v1/documents/{document_id}` - Delete a document
-
-#### Query Processing
-- `POST /api/v1/query` - Process a query and get answer
-- `GET /api/v1/metrics` - Get system metrics
-- `GET /api/v1/health` - Health check
-
-#### Evaluation
-- `POST /api/v1/evaluate` - Run evaluation against golden dataset
-
-### Example Usage
-
-#### Upload Document
 ```bash
-curl -X POST "http://localhost:8000/api/v1/documents/upload" \
-     -H "Content-Type: multipart/form-data" \
-     -F "file=@document.pdf"
+make dev-up
 ```
 
-#### Query Knowledge Base
+Or manually:
+
 ```bash
-curl -X POST "http://localhost:8000/api/v1/query" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "question": "What is the purpose of this system?",
-       "top_k": 5,
-       "confidence_threshold": 0.7
-     }'
+docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build
 ```
 
-## 🔧 Configuration
+Open these URLs:
 
-### Environment Variables
+| Service | URL |
+| --- | --- |
+| API docs (Swagger) | http://localhost:8002/docs |
+| pgAdmin | http://localhost:5051 |
+| Redis insight | http://localhost:6380 |
+| MLflow UI | http://localhost:5001 |
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection URL | `postgresql://postgres:postgres@localhost:5432/nexus_db` |
-| `REDIS_URL` | Redis connection URL | `redis://localhost:6379` |
-| `MLFLOW_TRACKING_URI` | MLflow tracking URI | `http://localhost:5001` |
-| `EMBEDDING_MODEL` | Embedding model name | `sentence-transformers/all-MiniLM-L6-v2` |
-| `LLM_MODEL` | LLM model name | `meta-llama/Llama-2-7b-chat-hf` |
+Stop the stack:
 
-### MLflow Configuration
-
-Edit `config/mlflow_config.yml` to customize:
-- Experiment settings
-- Model configurations
-- Evaluation thresholds
-- Monitoring parameters
-
-## 🧪 Testing
-
-### Run Tests
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app
-
-# Run specific test file
-pytest tests/test_documents.py
+make dev-down
 ```
 
-### Integration Tests
+## Environment Setup
+
+Copy the example file before running on a new machine:
+
 ```bash
-# Run integration tests
-pytest tests/integration/
+cp .env.example .env
 ```
 
-## 📊 Monitoring & Observability
+Secrets belong in `.env` files only. Do not commit real `DATABASE_URL`, `SECRET_KEY`, or MLflow credentials.
 
-### MLflow UI
-Access the MLflow UI at `http://localhost:5001` to:
-- Track experiments
-- Compare model performance
-- View model artifacts
-- Register and manage models
+## Important Environment Values
 
-### System Metrics
-The system collects various metrics:
-- Query response times
-- Confidence scores
-- Document processing metrics
-- Error rates
-- Cache hit ratios
+| File | Key | Purpose |
+| --- | --- | --- |
+| `.env` or `.env.dev` | `DATABASE_URL` | PostgreSQL connection string |
+| `.env` or `.env.dev` | `REDIS_URL` | Redis connection string |
+| `.env` or `.env.dev` | `EMBEDDING_MODEL` | Sentence transformer model name |
+| `.env` or `.env.dev` | `LLM_MODEL` | LLM model identifier |
+| `.env` or `.env.dev` | `MLFLOW_TRACKING_URI` | MLflow server URI |
 
-### Logging
-Logs are structured and can be sent to:
-- Console (development)
-- File (production)
-- ELK Stack (enterprise)
-- Cloud logging services
+## Docker Services
 
-## 🚀 Deployment
+| Service | Image/build | Port | Description |
+| --- | --- | --- | --- |
+| `api` | `./backend` (Dockerfile.dev) | `8002:8000` | FastAPI application with hot-reload |
+| `vector_db` | `ankane/pgvector` | `5434:5432` | PostgreSQL with pgvector extension |
+| `redis` | `redis:7-alpine` | `6380:6379` | Query result cache |
+| `pgadmin` | `dpage/pgadmin4` | `5051:80` | PostgreSQL admin UI |
 
-### Development
+## Common Commands
+
+| Task | Command |
+| --- | --- |
+| Full dev bootstrap | `make dev-up` |
+| Start without rebuild | `make up-dev` |
+| Stop (preserve volumes) | `make down-dev` |
+| Full destroy | `make dev-down` |
+| View logs | `make logs-dev` |
+| Seed test data | `make dev-seed` |
+| Build API image | `docker compose -f docker-compose.dev.yml build api` |
+| Run API container | `docker compose -f docker-compose.dev.yml run api` |
+
+## API Summary
+
+All API endpoints are served at `http://localhost:8002` in dev mode. Interactive documentation is available at `/docs`.
+
+| Domain | Base path | Examples |
+| --- | --- | --- |
+| Health | `/health` | `GET /health` |
+| Documents | `/api/v1/documents` | `POST /upload`, `GET /`, `GET /{id}`, `DELETE /{id}` |
+| Query | `/api/v1/query` | `POST /` with question and top_k |
+| Evaluation | `/api/v1/evaluate` | `POST /` against golden dataset |
+| Metrics | `/api/v1/metrics` | `GET /` system metrics |
+
+## Local Development Without Docker
+
+Backend:
+
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Production
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
+The Docker flow is the recommended path because it aligns PostgreSQL with pgvector, Redis, MLflow, and runtime settings.
 
-### Environment Variables for Production
-```bash
-# Required production variables
-POSTGRES_USER=your_postgres_user
-POSTGRES_PASSWORD=your_postgres_password
-ECR_REPOSITORY=your_ecr_repository
-MLFLOW_BACKEND_URI=your_mlflow_backend_uri
-```
+## Security Notes
 
-## 🤝 Contributing
+- `.env` and `.env.dev` files are ignored by git.
+- Database credentials and API keys must never be committed.
+- Use `DEBUG=False` and production credentials before deploying publicly.
+- MLflow tracking URI should point to a secured server in production.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite
-6. Submit a pull request
+## Troubleshooting
 
-### Development Guidelines
-- Follow PEP 8 style guidelines
-- Write comprehensive docstrings
-- Include unit tests for new features
-- Update documentation as needed
-
-## 📈 Performance Optimization
-
-### Caching Strategy
-- Redis for query results
-- Embedding vector caching
-- Document chunk caching
-
-### Database Optimization
-- Proper indexing for vector search
-- Connection pooling
-- Query optimization
-
-### Model Optimization
-- Model quantization
-- Batch processing
-- Asynchronous inference
-
-## 🔒 Security
-
-### API Security
-- Input validation
-- Rate limiting
-- Authentication (JWT/OAuth)
-- CORS protection
-
-### Data Security
-- Encryption at rest
-- Secure file handling
-- Access controls
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Issues**
-   - Check PostgreSQL is running
-   - Verify connection URL
-   - Check network connectivity
-
-2. **Memory Issues**
-   - Reduce batch size
-   - Increase Redis memory
-   - Optimize model loading
-
-3. **Slow Query Performance**
-   - Check Redis cache
-   - Verify database indexes
-   - Monitor system resources
-
-### Debug Mode
-Enable debug logging:
-```bash
-export LOG_LEVEL=DEBUG
-```
-
-## 📚 Additional Resources
-
-### Documentation
-- [API Documentation](docs/api/)
-- [Deployment Guide](docs/deployment/)
-- [Development Guide](docs/development/)
-
-### Related Projects
-- [Frontend Repository](https://github.com/your-org/nexus-frontend)
-- [MLflow Documentation](https://mlflow.org/docs/latest/index.html)
-- [pgvector Documentation](https://github.com/pgvector/pgvector)
-
-## 🤝 Support
-
-For support and questions:
-- Create an issue on GitHub
-- Check the troubleshooting section
-- Review the documentation
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [FastAPI](https://fastapi.tiangolo.com/) for the web framework
-- [MLflow](https://mlflow.org/) for experiment tracking
-- [pgvector](https://github.com/pgvector/pgvector) for vector search
-- [Sentence Transformers](https://www.sbert.net/) for embeddings
-
----
-
-Made with ❤️ by the Nexus AI Team
+| Problem | Fix |
+| --- | --- |
+| Port conflicts (5050, 8002, etc.) | Change host port in `docker-compose.dev.yml` |
+| API cannot connect to database | Confirm `DATABASE_URL` uses `vector_db` as hostname |
+| pgAdmin login fails | Default: `admin@admin.com` / `password` |
+| Vector search returns no results | Ensure documents are processed and embeddings are generated |
+| Seed data not applied | Run `make dev-seed` or `docker exec nexus-vector-db psql -U admin -d nexus_knowledge < backend/scripts/seed_test_data.sql` |
