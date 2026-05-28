@@ -2,119 +2,52 @@
 
 ```
 nexus/
-├── ai/                          # AI/ML related components
-│   ├── models/                  # Pre-trained models and configurations
-│   │   ├── embedding_models/
-│   │   ├── llm_models/
-│   │   └── evaluation_models/
-│   ├── pipelines/               # ML pipelines for data processing
-│   │   ├── document_ingestion.py
-│   │   ├── vector_embedding.py
-│   │   └── query_processing.py
-│   ├── evaluation/              # Evaluation scripts and metrics
-│   │   ├── golden_dataset/
-│   │   ├── metrics.py
-│   │   └── benchmarking.py
-│   └── rag/                      # RAG-specific components
-│       ├── retriever.py
-│       └── generator.py
+├── ai/                              # AI/ML components
+│   ├── models/                      # Pre-trained model configs and wrappers
+│   ├── pipelines/                   # ML pipelines (shall link to backend/app/llm)
+│   ├── evaluation/                  # Evaluation scripts and golden datasets
+│   └── rag/                         # RAG-specific retriever/generator logic
 │
-├── mlflow/                      # MLflow experiment tracking
-│   ├── experiments/             # Experiment runs
-│   ├── models/                  # Registered models
-│   └── artifacts/               # Artifacts and datasets
-│
-├── backend/                     # FastAPI backend
+├── backend/                         # FastAPI backend
 │   ├── app/
-│   │   ├── api/                 # API endpoints
-│   │   │   ├── v1/
-│   │   │   │   ├── documents.py
-│   │   │   │   ├── queries.py
-│   │   │   │   ├── evaluation.py
-│   │   │   │   └── health.py
-│   │   ├── core/                # Core application logic
-│   │   │   ├── config.py
-│   │   │   ├── security.py
-│   │   │   └── exceptions.py
-│   │   ├── db/                  # Database models and operations
-│   │   │   ├── connection.py
-│   │   │   ├── session.py
-│   │   │   └── models.py
-│   │   ├── ml/                  # ML integration
-│   │   │   ├── embedding_service.py
-│   │   │   ├── llm_service.py
-│   │   │   └── mlflow_client.py
-│   │   ├── services/             # Business logic services
-│   │   │   ├── document_service.py
-│   │   │   ├── query_service.py
-│   │   │   └── evaluation_service.py
-│   │   └── main.py
-│   ├── tests/                   # Backend tests
-│   └── scripts/                 # Backend scripts
+│   │   ├── api/routes/              # API endpoint handlers
+│   │   ├── core/                    # Config, security, exceptions
+│   │   ├── db/                      # SQLAlchemy models and session
+│   │   ├── llm/                     # Document ingestion, embeddings, query pipeline
+│   │   ├── ml/                      # MLflow client integration
+│   │   ├── services/                # Business logic layer
+│   │   └── main.py                  # FastAPI application entry point
+│   ├── tests/                       # Backend unit/integration tests
+│   ├── scripts/                     # Utility scripts (seed data, migrations)
+│   ├── Dockerfile.dev               # Dev image with hot-reload
+│   ├── Dockerfile.prod              # Production image
+│   └── requirements.txt             # Python dependencies
 │
-├── frontend/                    # React frontend
-│   ├── src/
-│   │   ├── components/          # Reusable components
-│   │   ├── pages/               # Page components
-│   │   ├── services/            # API services
-│   │   ├── utils/               # Utility functions
-│   │   ├── types/               # TypeScript types
-│   │   └── main.tsx
-│   └── public/                  # Static assets
+├── config/                          # YAML/TOML configuration files
+│   └── mlflow_config.yml            # MLflow experiment and model settings
 │
-├── docker/                      # Docker configurations
-│   ├── backend/
-│   │   ├── Dockerfile.dev
-│   │   └── Dockerfile.prod
-│   └── nginx/                   # Nginx configuration
-│       └── nginx.conf
+├── mlops/                           # MLflow experiment tracking data
+│   └── mlflow_config.yml            # (mirrored from config/)
 │
-├── config/                      # Configuration files
-│   ├── mlflow_config.yml
-│   ├── logging_config.yml
-│   ├── database_config.yml
-│   └── model_configs/
+├── frontend/                        # React frontend (placeholder)
 │
-├── scripts/                     # Utility scripts
-│   ├── setup.sh
-│   ├── deploy.sh
-│   └── evaluate.sh
+├── scripts/                         # Root-level dev/prod scripts
+│   └── setup.sh                     # Local virtual environment setup
 │
-├── tests/                      # Integration and e2e tests
+├── tests/                           # Integration and e2e tests
 │   ├── integration/
 │   └── e2e/
 │
-├── docs/                        # Documentation
+├── docs/                            # Documentation
 │   ├── api/
 │   ├── deployment/
 │   └── development/
 │
-├── docker-compose.dev.yml       # Development environment
-├── docker-compose.prod.yml      # Production environment
-├── .env.example                # Environment variables example
-├── .gitignore                  # Git ignore file
-├── README.md                   # Project README
-└── requirements.txt            # Python dependencies
+├── docker-compose.dev.yml           # Dev environment (PostgreSQL, Redis, pgAdmin)
+├── docker-compose.prod.yml          # Production stack (Nginx, MLflow, frontend)
+├── Makefile                         # Dev workflow commands
+├── .env.dev                         # Dev environment variables
+├── .gitignore                       # Git ignore rules
+├── project-structure.md             # This file
+└── README.md                        # Project README
 ```
-
-## Key Features
-
-### AI/ML Components:
-- **Modular AI pipeline architecture** for easy model swapping
-- **Vector embeddings** with pgvector for efficient similarity search
-- **LLM integration** with configurable models
-- **Evaluation framework** with golden dataset testing
-- **MLflow integration** for experiment tracking
-
-### LLMOps Features:
-- **Automated model evaluation** pipeline
-- **Prompt versioning** and management
-- **Drift detection** with confidence thresholds
-- **Observability** with metrics and logging
-- **CI/CD integration** for ML model deployment
-
-### Infrastructure:
-- **Containerized** with Docker for consistent environments
-- **Scalable architecture** with Redis caching
-- **Production-ready** with Nginx reverse proxy
-- **Database** with PostgreSQL and pgvector extension
