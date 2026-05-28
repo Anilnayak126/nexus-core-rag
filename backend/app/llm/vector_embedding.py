@@ -91,35 +91,49 @@ class VectorEmbeddingPipeline:
         self, 
         query: str, 
         top_k: int = 5,
-        use_cache: bool = True
+        use_cache: bool = True,
+        semantic_cache_threshold: float = 0.95,
     ) -> List[SearchResult]:
         """
         Search for chunks similar to the query.
-        
+
+        Uses a two-level cache:
+          1. Semantic cache — compares query embedding against past query
+             embeddings stored in Redis. If a semantically similar query
+             (cosine >= semantic_cache_threshold) exists, returns its results.
+          2. Exact cache — hash-based lookup for repeated identical queries.
+
         Args:
             query: Search query
             top_k: Number of results to return
             use_cache: Whether to use Redis cache
-            
+            semantic_cache_threshold: Minimum cosine similarity for a semantic hit
+
         Returns:
             List of search results
         """
-        # Create cache key
+        query_embedding = await self.generate_embedding(query)
+
+        # --- Level 1: Semantic cache ---
+        if use_cache:
+            semantic_hit = await self._check_semantic_cache(
+                query_embedding, semantic_cache_threshold
+            )
+            if semantic_hit is not None:
+                logger.info("Semantic cache HIT (similarity=%.3f)", semantic_hit["similarity"])
+                return [SearchResult(**r) for r in semantic_hit["results"]]
+
+        # --- Level 2: Exact (hash-based) cache ---
         cache_key = f"search:{hash(query)}:{top_k}"
-        
-        # Check cache
         if use_cache:
             cached_result = await self.redis_client.get(cache_key)
             if cached_result:
-                logger.info(f"Cache hit for query: {query}")
+                logger.info("Exact cache hit for query: %s", query)
                 return [SearchResult(**r) for r in json.loads(cached_result)]
-        
-        # Generate query embedding
-        query_embedding = await self.generate_embedding(query)
-        
-        # Perform similarity search
+
+        # --- Miss: perform vector search ---
         results = await self._vector_search(query_embedding, top_k)
-        
+
         # Cache results
         if use_cache and results:
             await self.redis_client.setex(
@@ -127,8 +141,51 @@ class VectorEmbeddingPipeline:
                 self.cache_ttl,
                 json.dumps([r.__dict__ for r in results])
             )
-        
+            # Also store in semantic cache for future similar queries
+            await self._store_semantic_cache(query_embedding, results)
+
         return results
+
+    async def _check_semantic_cache(
+        self, query_embedding: np.ndarray, threshold: float
+    ) -> Optional[dict]:
+        """Check Redis for a semantically similar past query."""
+        cached_keys = await self.redis_client.keys("semantic_cache:*")
+        if not cached_keys:
+            return None
+
+        query_vec = query_embedding.flatten()
+        best_match = None
+        best_sim = 0.0
+
+        for key in cached_keys:
+            raw = await self.redis_client.get(key)
+            if not raw:
+                continue
+            entry = json.loads(raw)
+            stored_vec = np.array(entry["embedding"], dtype=np.float32)
+            sim = np.dot(query_vec, stored_vec) / (
+                np.linalg.norm(query_vec) * np.linalg.norm(stored_vec)
+            )
+            if sim > best_sim:
+                best_sim = sim
+                best_match = entry
+
+        if best_match and best_sim >= threshold:
+            return {"similarity": float(best_sim), "results": best_match["results"]}
+        return None
+
+    async def _store_semantic_cache(
+        self, query_embedding: np.ndarray, results: List[SearchResult]
+    ):
+        """Store query embedding + results for future semantic lookups."""
+        key = f"semantic_cache:{hash(str(results))}"
+        entry = {
+            "embedding": query_embedding.flatten().tolist(),
+            "results": [r.__dict__ for r in results],
+            "cached_at": time.time(),
+        }
+        await self.redis_client.setex(key, self.cache_ttl, json.dumps(entry))
     
     async def _vector_search(
         self, 
