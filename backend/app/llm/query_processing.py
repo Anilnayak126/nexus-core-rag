@@ -9,6 +9,7 @@ This pipeline handles:
 """
 
 import time
+import asyncio
 import logging
 from typing import Dict, List, Optional
 import json
@@ -210,6 +211,9 @@ class QueryProcessingPipeline:
 
             return result
 
+        except asyncio.CancelledError:
+            logger.warning("Query cancelled (reload in progress): %s", query_id)
+            raise
         except Exception as e:
             logger.error("Error processing query: %s", str(e))
             if self.mlflow:
