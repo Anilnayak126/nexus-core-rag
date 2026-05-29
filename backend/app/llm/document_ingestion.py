@@ -12,7 +12,6 @@ import os
 import fitz  # PyMuPDF
 import logging
 from typing import List, Dict, Optional
-from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import asyncio
@@ -234,30 +233,3 @@ class DocumentIngestionPipeline:
                     doc_id,
                     i
                 )
-    
-    async def batch_process_documents(self, directory: str) -> List[Dict]:
-        """
-        Process all PDF files in a directory.
-        
-        Args:
-            directory: Directory containing PDF files
-            
-        Returns:
-            List of processing results
-        """
-        results = []
-        pdf_files = list(Path(directory).glob("*.pdf"))
-        
-        for pdf_file in pdf_files:
-            try:
-                result = await self.process_document(str(pdf_file))
-                results.append(result)
-            except Exception as e:
-                logger.error(f"Error processing {pdf_file}: {str(e)}")
-                results.append({
-                    "filename": pdf_file.name,
-                    "status": "error",
-                    "error": str(e)
-                })
-        
-        return results
