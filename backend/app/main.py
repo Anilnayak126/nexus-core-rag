@@ -45,9 +45,7 @@ class QueryResponse(BaseModel):
     processing_time: float
 
 
-class EvaluationRequest(BaseModel):
-    dataset_path: str
-    run_name: str = "evaluation_run"
+
 
 
 @app.on_event("startup")
@@ -119,18 +117,6 @@ async def query_knowledge_base(request: QueryRequest):
         confidence=result.confidence,
         processing_time=result.processing_time,
     )
-
-
-@app.post("/evaluate")
-async def run_evaluation(request: EvaluationRequest):
-    from app.services.evaluation_service import EvaluationService
-
-    service = EvaluationService()
-    results = await service.run_evaluation(
-        dataset_path=request.dataset_path,
-        run_name=request.run_name,
-    )
-    return results
 
 
 @app.get("/health")
