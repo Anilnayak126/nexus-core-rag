@@ -13,7 +13,7 @@ dev-up: dev-bootstrap
 # call `make dev-up` (above) which depends on this.
 dev-bootstrap:
 	@echo "▶ Building images & starting containers..."
-	docker compose -p dev -f docker-compose.dev.yml --env-file .env.dev up -d --build
+	docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build
 	@echo "▶ Waiting for Postgres to accept connections..."
 	@for i in $$(seq 1 30); do \
 	  docker exec nexus-vector-db pg_isready -U admin -d nexus_knowledge >/dev/null 2>&1 && break; \
@@ -37,7 +37,7 @@ dev-bootstrap:
 	@echo "   then open http://localhost:5173"
 
 dev-down:
-	docker compose -p dev -f docker-compose.dev.yml --env-file .env.dev down -v
+	docker compose -f docker-compose.dev.yml --env-file .env.dev down -v
 
 # TEAM ENVIRONMENT (full destroy)
 team-up:
@@ -53,7 +53,7 @@ team-down:
 
 # Start ONLY DEV (no rebuild)
 up-dev:
-	docker compose -p dev -f docker-compose.dev.yml up -d
+	docker compose -f docker-compose.dev.yml up -d
 	@echo "🚀 DEV started without rebuild."
 
 # Start ONLY TEAM (no rebuild)
@@ -70,7 +70,7 @@ up: up-dev up-team
 # NON-DESTRUCTIVE DOWN COMMANDS
 # ------------------------------
 down-dev:
-	docker compose -p dev -f docker-compose.dev.yml down
+	docker compose -f docker-compose.dev.yml down
 	@echo "🛑 DEV stopped (volumes preserved)."
 
 down-team:
@@ -90,7 +90,7 @@ dev-seed:
 
 # LOGS
 logs-dev:
-	docker compose -p dev -f docker-compose.dev.yml logs -f
+	docker compose -f docker-compose.dev.yml logs -f
 
 logs-team:
-	docker compose -p team -f docker-compose.yml logs -f
+	docker compose -f docker-compose.yml logs -f
