@@ -1,6 +1,6 @@
 import mlflow
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 import socket
 from urllib.parse import urlparse
 from datetime import datetime

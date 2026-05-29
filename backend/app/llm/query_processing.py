@@ -15,7 +15,6 @@ from typing import Dict, List, Optional
 import json
 import numpy as np
 from dataclasses import dataclass
-import asyncpg
 from sentence_transformers import SentenceTransformer
 from .vector_embedding import VectorEmbeddingPipeline
 from .retrieval_gate import RetrievalGate, GateDecision
@@ -249,17 +248,6 @@ class QueryProcessingPipeline:
         Returns:
             Generated answer
         """
-        # Format context
-        context = "\n\n".join([
-            f"Source {i+1} ({chunk.filename}):\n{chunk.content}"
-            for i, chunk in enumerate(chunks)
-        ])
-        
-        # Create prompt
-        prompt = self._create_prompt(query, context)
-        
-        # Here you would integrate with your LLM service
-        # For demonstration, we'll return a formatted response
         return self._format_llm_response(query, chunks)
     
     def _create_prompt(self, query: str, context: str) -> str:

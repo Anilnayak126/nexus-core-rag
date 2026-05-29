@@ -9,7 +9,7 @@ LLM hallucinate.
 
 import time
 import logging
-from typing import List, Optional
+from typing import List
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)

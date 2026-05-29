@@ -118,7 +118,7 @@ def print_report(results: List[Dict], params: Dict) -> None:
     failed = total - passed
 
     print(f"\n{'='*60}")
-    print(f"  NEXUS RAG EVALUATION REPORT")
+    print("  NEXUS RAG EVALUATION REPORT")
     print(f"  {datetime.now().isoformat()}")
     print(f"  API: {API_BASE}")
     print(f"{'='*60}")
@@ -147,7 +147,7 @@ def print_report(results: List[Dict], params: Dict) -> None:
     # Failed cases detail
     failed_cases = [r for r in results if not r["passed"]]
     if failed_cases:
-        print(f"  FAILED CASES:")
+        print("  FAILED CASES:")
         for r in failed_cases:
             print(f"    [{r['id']}] ({r['category']}) {r['question'][:60]}")
             for check_name, check_result in r["checks"].items():
