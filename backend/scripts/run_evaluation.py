@@ -13,9 +13,9 @@ import urllib.error
 from typing import Dict, List, Tuple
 from datetime import datetime
 
-GOLDEN_DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "golden_dataset.json")
+GOLDEN_DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "golden_dataset.json")
 API_BASE = os.environ.get("NEXUS_API_URL", "http://localhost:8002")
-REPORT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "evaluations")
+REPORT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "evaluations")
 
 
 def load_golden_dataset(path: str) -> List[Dict]:
