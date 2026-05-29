@@ -5,7 +5,7 @@ import os
 import pytest
 import httpx
 
-API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8002")
+API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8000")
 TEST_PDF = os.path.join(os.path.dirname(__file__), "test_document.pdf")
 
 

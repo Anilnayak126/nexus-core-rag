@@ -32,8 +32,10 @@ query_pipeline: Optional[QueryProcessingPipeline] = None
 mlflow_client: Optional[MLflowClient] = None
 
 
+from pydantic import Field
+
 class QueryRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1)
     top_k: int = 5
     confidence_threshold: float = 0.7
 

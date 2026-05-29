@@ -1,5 +1,4 @@
-pytest config for Nexus Knowledge Engine tests.
-"""
+"""pytest config for Nexus Knowledge Engine tests."""
 import os
 
 # If running against a live API, set this env var

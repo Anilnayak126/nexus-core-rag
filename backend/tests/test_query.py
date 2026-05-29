@@ -4,7 +4,7 @@ import os
 import pytest
 import httpx
 
-API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8002")
+API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8000")
 
 
 @pytest.fixture(scope="module")

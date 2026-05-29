@@ -1,0 +1,654 @@
+{
+  "timestamp": "2026-05-29T09:30:47.747875",
+  "api_base": "http://localhost:8002",
+  "total_cases": 15,
+  "passed": 2,
+  "failed": 13,
+  "pass_rate": 13.3,
+  "results": [
+    {
+      "id": "tc-001",
+      "category": "exact_match",
+      "question": "What is the Nexus Knowledge Engine?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "RAG system",
+            "enterprise knowledge retrieval"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 5.8
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "smoke",
+        "core"
+      ]
+    },
+    {
+      "id": "tc-002",
+      "category": "exact_match",
+      "question": "What endpoints does the API reference document?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "/documents/upload",
+            "/query",
+            "/health"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.26
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "smoke",
+        "core"
+      ]
+    },
+    {
+      "id": "tc-003",
+      "category": "exact_match",
+      "question": "What architecture does the system use?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "microservices",
+            "PostgreSQL",
+            "pgvector",
+            "Redis"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.22
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "smoke",
+        "core"
+      ]
+    },
+    {
+      "id": "tc-004",
+      "category": "exact_match",
+      "question": "What are the key features of the Nexus Knowledge Engine?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "Document processing",
+            "PDF text extraction",
+            "Vector embeddings",
+            "sentence-transformers",
+            "Retrieval Gate",
+            "MLflow"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.22
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "core"
+      ]
+    },
+    {
+      "id": "tc-005",
+      "category": "semantic_similar",
+      "question": "Tell me about the document ingestion and chunking system",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "sliding window",
+            "chunking",
+            "PDF text extraction"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.21
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "semantic"
+      ]
+    },
+    {
+      "id": "tc-006",
+      "category": "semantic_similar",
+      "question": "How does the system handle vector search?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "cosine similarity",
+            "pgvector",
+            "HNSW"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.2
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "semantic"
+      ]
+    },
+    {
+      "id": "tc-007",
+      "category": "semantic_similar",
+      "question": "What caching mechanism does the RAG pipeline use?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "Redis",
+            "semantic caching"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.25
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "semantic"
+      ]
+    },
+    {
+      "id": "tc-008",
+      "category": "semantic_similar",
+      "question": "Explain the telemetry and monitoring setup",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "MLflow",
+            "latency",
+            "confidence"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.31
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "semantic"
+      ]
+    },
+    {
+      "id": "tc-009",
+      "category": "no_context",
+      "question": "What is the weather in Tokyo?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "No relevant context"
+          ]
+        },
+        "sources_count": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        "confidence": {
+          "passed": true,
+          "min_expected": 0.0,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.22
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "gate",
+        "safety"
+      ]
+    },
+    {
+      "id": "tc-010",
+      "category": "no_context",
+      "question": "Who won the World Cup in 2022?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "No relevant context"
+          ]
+        },
+        "sources_count": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        "confidence": {
+          "passed": true,
+          "min_expected": 0.0,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.2
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "gate",
+        "safety"
+      ]
+    },
+    {
+      "id": "tc-011",
+      "category": "no_context",
+      "question": "What is the capital of France?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "No relevant context"
+          ]
+        },
+        "sources_count": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        "confidence": {
+          "passed": true,
+          "min_expected": 0.0,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.24
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "gate",
+        "safety"
+      ]
+    },
+    {
+      "id": "tc-012",
+      "category": "edge_case",
+      "question": "",
+      "passed": true,
+      "checks": {
+        "answer_contains": {
+          "passed": true,
+          "found": [],
+          "missing": []
+        },
+        "sources_count": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        "confidence": {
+          "passed": true,
+          "min_expected": 0.0,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.21
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "edge"
+      ]
+    },
+    {
+      "id": "tc-013",
+      "category": "edge_case",
+      "question": "a",
+      "passed": true,
+      "checks": {
+        "answer_contains": {
+          "passed": true,
+          "found": [],
+          "missing": []
+        },
+        "sources_count": {
+          "passed": true,
+          "expected": 0,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        "confidence": {
+          "passed": true,
+          "min_expected": 0.0,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.2
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "edge"
+      ]
+    },
+    {
+      "id": "tc-014",
+      "category": "edge_case",
+      "question": "Nexus",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "Nexus"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.25
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "edge"
+      ]
+    },
+    {
+      "id": "tc-015",
+      "category": "mixed",
+      "question": "What does the Nexus platform provide?",
+      "passed": false,
+      "checks": {
+        "answer_contains": {
+          "passed": false,
+          "found": [],
+          "missing": [
+            "unified API",
+            "document ingestion",
+            "vector search",
+            "LLM-powered query"
+          ]
+        },
+        "sources_count": {
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        "gate_blocked": {
+          "passed": false,
+          "expected": false,
+          "actual": true
+        },
+        "confidence": {
+          "passed": false,
+          "min_expected": 0.5,
+          "actual": 0.0
+        },
+        "response_time_ms": {
+          "actual": 0.2
+        }
+      },
+      "response": {
+        "error": "<urlopen error [Errno 111] Connection refused>",
+        "sources": [],
+        "confidence": 0.0
+      },
+      "tags": [
+        "regression"
+      ]
+    }
+  ],
+  "params": {
+    "answer_similarity_threshold": 0.8,
+    "retrieval_accuracy_threshold": 0.75,
+    "gate_accuracy_threshold": 1.0,
+    "max_response_time_ms": 500
+  }
+}
