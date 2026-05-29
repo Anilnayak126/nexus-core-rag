@@ -51,6 +51,10 @@ jobs:
       - name: Seed test data
         run: make dev-seed
 
+      - name: Generate embeddings for seed data
+        run: |
+          docker exec nexus-api python scripts/seed_embeddings.py
+
       - name: Run pytest with coverage
         run: |
           docker exec nexus-api python -m pytest tests/ \
