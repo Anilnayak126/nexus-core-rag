@@ -67,7 +67,7 @@ backend/tests/
 ```bash
 make test
 # or
-cd backend && python -m pytest tests/ -v
+cd backend && python -m pytest tests/ -v --cov=app --cov-fail-under=80
 ```
 
 ## Days 18-19: GitHub Actions
@@ -79,11 +79,15 @@ File: `.github/workflows/ci.yml`
 **Pipeline stages:**
 
 1. **Lint** — ruff on `backend/app/` and `backend/scripts/`
-2. **Test** — Start Docker compose → seed data → upload test doc → run pytest → run golden dataset eval → archive report → cleanup
+2. **Test & Coverage** — Start Docker compose → seed data → upload test doc → run pytest with `--cov-fail-under=80` → run golden dataset eval → archive report → cleanup
+
+**Coverage gate:** If coverage falls below **80%**, the CI step fails and the PR cannot merge.
 
 **Key env vars:** `NEXUS_API_URL=http://localhost:8002`
 
 ## Days 20-21: Multi-stage Docker & AWS Deploy
+
+> **Note:** AWS ECR/ECS deployment is on hold. Only the multi-stage Dockerfile is in place.
 
 ### Multi-stage Dockerfile
 
@@ -99,25 +103,10 @@ Build:
 docker build -f backend/Dockerfile.prod -t nexus-api:latest backend/
 ```
 
-### Deployment Script
-
-`scripts/deploy.sh` automates:
-
-1. Build multi-stage image
-2. Authenticate with ECR
-3. Tag + push image
-4. Force new ECS deployment
-
-```bash
-# Prerequisites: AWS CLI configured, ECR repo + ECS cluster exist
-./scripts/deploy.sh --env prod --region us-east-1
-```
-
 ### Makefile Targets
 
 | Target | Description |
 |--------|-------------|
-| `make test` | Run pytest suite |
+| `make test` | Run pytest with coverage gate (80%) |
 | `make eval` | Run golden dataset evaluation |
 | `make build-prod` | Build multi-stage production image |
-| `make deploy` | Build, push to ECR, deploy to ECS |

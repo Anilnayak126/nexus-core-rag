@@ -1,4 +1,4 @@
-.PHONY: up-dev up-team down-dev down-team dev-up dev-down team-up team-down logs-dev logs-team up dev-seed dev-bootstrap test eval build-prod deploy
+.PHONY: up-dev up-team down-dev down-team dev-up dev-down team-up team-down logs-dev logs-team up dev-seed dev-bootstrap test eval build-prod
 
 # DEV ENVIRONMENT — full bootstrap (build + start + seed dev/CI demo data).
 dev-up: dev-bootstrap
@@ -88,10 +88,14 @@ logs-team:
 # PHASE 3 — CI/CD & MLOps
 # ============================================================
 
-# Run pytest suite against a running dev stack
+# Run pytest suite with coverage gate (fail if under 80%)
 test:
-	@echo "▶ Running pytest..."
-	cd backend && python -m pytest tests/ -v --tb=short
+	@echo "▶ Running pytest with coverage (threshold: 80%)..."
+	cd backend && python -m pytest tests/ -v --tb=short \
+	  --cov=app \
+	  --cov-config=.coveragerc \
+	  --cov-report=term-missing \
+	  --cov-fail-under=80
 
 # Run golden dataset evaluation against a running dev stack
 eval:
@@ -102,8 +106,3 @@ eval:
 build-prod:
 	@echo "▶ Building production image (multi-stage)..."
 	docker build -f backend/Dockerfile.prod -t nexus-api:latest backend/
-
-# Deploy to AWS ECS (requires AWS CLI + ECR + ECS configured)
-deploy:
-	@echo "▶ Deploying to AWS..."
-	bash scripts/deploy.sh

@@ -1,0 +1,17 @@
+[run]
+source = app/
+omit = */tests/*,*/scripts/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    raise NotImplementedError()
+    raise AssertionError
+    raise AssertionError()
+    pass
+
+fail_under = 80
+show_missing = true
+skip_covered = true
