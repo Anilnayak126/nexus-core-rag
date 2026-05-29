@@ -1,5 +1,9 @@
-"""pytest config for Nexus Knowledge Engine tests."""
-import os
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
 
-# If running against a live API, set this env var
-NEXUS_API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8002")
+
+@pytest.fixture(scope="module")
+def client():
+    with TestClient(app) as c:
+        yield c

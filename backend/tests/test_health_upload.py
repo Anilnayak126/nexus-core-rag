@@ -1,18 +1,9 @@
 """Tests for the health and document upload endpoints."""
 
-import json
 import os
 import pytest
-import httpx
 
-API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8000")
 TEST_PDF = os.path.join(os.path.dirname(__file__), "test_document.pdf")
-
-
-@pytest.fixture(scope="module")
-def client():
-    with httpx.Client(base_url=API_URL, timeout=30) as c:
-        yield c
 
 
 class TestHealth:
