@@ -4,30 +4,26 @@
 flowchart LR
     Query[User Query]
     Embed[sentence-transformers]
-    ExactKey[hash(query)]
-    SemanticKey[Store embedding]
-    Redis[(Redis)]
-    Compare{Cos sim >= 0.95?}
-    Return[Return Cached Result]
-    Miss[Cache Miss → Vector Search]
-    Store[Cache Result<br/>TTL: 3600s]
+    Level1{Level 1<br/>Semantic<br/>cos &gt;= 0.95}
+    Level2{Level 2<br/>Exact hash}
+    Redis[(Redis Cache)]
+    Cached[Return Cached Result]
+    Miss[Cache Miss<br/>Vector Search]
+    Store[Store Result<br/>TTL 3600s]
 
-    Query -->|Level 1| Embed
-    Embed --> SemanticKey
-    SemanticKey --> Redis
-    Redis -->|fetch stored embeddings| Compare
-    Compare -->|yes| Return
-    Compare -->|no| ExactKey
-    ExactKey --> Redis
-    Redis -->|fetch exact match| ExactKey
-    ExactKey -->|hit| Return
-    ExactKey -->|miss| Miss
-    Miss -->|after vector search| Store
+    Query -->|embeds| Embed
+    Embed -->|query vector| Level1
+    Level1 -->|HIT| Cached
+    Level1 -->|MISS| Level2
+    Level2 -->|HIT| Cached
+    Level2 -->|MISS| Miss
+    Miss -->|results| Store
     Store --> Redis
+    Redis --> Level1
+    Redis --> Level2
 
     style Redis fill:#DC382D,color:#fff
     style Embed fill:#FFD700,color:#000
-    style Compare fill:#FFA500,color:#000
 ```
 
 ## Cache Hierarchy

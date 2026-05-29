@@ -3,32 +3,32 @@
 ```mermaid
 flowchart TB
     User((User))
-    API[/query]
-    Embed[sentence-transformers<br/>all-MiniLM-L6-v2]
-    SemanticCache{Level 1:<br/>Semantic Cache<br/>cos >= 0.95}
-    ExactCache{Level 2:<br/>Exact Hash Cache}
+    API[[/query]]
+    Embed[sentence-transformers]
+    CacheHit{Level 1 Cache<br/>cos &gt;= 0.95}
+    ExactCache{Level 2 Cache<br/>Exact hash match}
     VectorDB[(pgvector<br/>HNSW cos search)]
-    Dedup[Deduplicate by<br/>(filename, chunk_index)]
-    Confidence[Calculate Confidence<br/>Weighted avg → sigmoid]
-    Gate{Retrieval Gate<br/>min_confidence=0.5}
-    Format[Format Answer<br/>Bullet points from chunks]
+    Dedup[Deduplicate<br/>filename + chunk_index]
+    Confidence[Calculate Confidence]
+    Gate{Retrieval Gate<br/>min 0.5}
+    Format[Format Answer]
     Response[Return JSON]
-    Block[Block: "No relevant context found"]
-    Metrics[Log to MLflow<br/>latency, confidence, sources]
+    Block[Block: No context found]
+    Metrics[Log to MLflow]
 
     User -->|POST /query| API
     API --> Embed
-    Embed -->|query vector| SemanticCache
 
-    SemanticCache -->|HIT| Format
-    SemanticCache -->|MISS| ExactCache
+    Embed -->|query vector| CacheHit
+    CacheHit -->|HIT| Format
+    CacheHit -->|MISS| ExactCache
 
     ExactCache -->|HIT| Format
     ExactCache -->|MISS| VectorDB
 
-    VectorDB -->|top_k results| Dedup
-    Dedup --> Confidence
-    Confidence --> Gate
+    VectorDB -->|top k results| Dedup
+    Dedup -->|unique chunks| Confidence
+    Confidence -->|score| Gate
 
     Gate -->|passed| Format
     Gate -->|blocked| Block
