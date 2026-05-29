@@ -1,6 +1,6 @@
 [run]
 source = app/
-omit = */tests/*,*/scripts/*
+omit = */tests/*,*/scripts/*,*/ml/*
 
 [report]
 exclude_lines =

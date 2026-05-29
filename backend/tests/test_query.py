@@ -1,17 +1,5 @@
 """Tests for the query endpoint, caching, and retrieval gate."""
 
-import os
-import pytest
-import httpx
-
-API_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8000")
-
-
-@pytest.fixture(scope="module")
-def client():
-    with httpx.Client(base_url=API_URL, timeout=30) as c:
-        yield c
-
 
 class TestQuery:
     def test_query_relevant_returns_sources(self, client):

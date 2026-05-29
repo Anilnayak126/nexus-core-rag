@@ -9,7 +9,7 @@ This pipeline handles:
 
 import numpy as np
 import logging
-from typing import List, Dict, Optional, Tuple
+from typing import List, Optional
 import asyncpg
 from sentence_transformers import SentenceTransformer
 from dataclasses import dataclass

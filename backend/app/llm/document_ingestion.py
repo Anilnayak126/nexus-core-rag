@@ -14,7 +14,6 @@ import logging
 from typing import List, Dict, Optional
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import asyncio
 import asyncpg
 from dataclasses import dataclass
 

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 import os
 import logging
@@ -31,8 +31,6 @@ document_pipeline: Optional[DocumentIngestionPipeline] = None
 query_pipeline: Optional[QueryProcessingPipeline] = None
 mlflow_client: Optional[MLflowClient] = None
 
-
-from pydantic import Field
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1)
