@@ -217,7 +217,7 @@ class VectorEmbeddingPipeline:
                 ORDER BY dc.embedding <=> $1
                 LIMIT $2
                 """,
-                query_embedding.tolist(),
+                str(query_embedding.tolist()),
                 top_k
             )
             

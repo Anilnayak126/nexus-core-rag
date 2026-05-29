@@ -209,7 +209,7 @@ class DocumentIngestionPipeline:
                     SET embedding = $1
                     WHERE document_id = $2 AND chunk_index = $3
                     """,
-                    embedding.tolist(),
+                    str(embedding.tolist()),
                     doc_id,
                     i
                 )
