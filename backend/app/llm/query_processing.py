@@ -13,6 +13,7 @@ import asyncio
 import logging
 from typing import Dict, List, Optional
 import json
+import numpy as np
 from dataclasses import dataclass
 import asyncpg
 from sentence_transformers import SentenceTransformer
@@ -87,7 +88,8 @@ class QueryProcessingPipeline:
         self.vector_pipeline = VectorEmbeddingPipeline(
             db_url=db_url,
             redis_url=redis_url,
-            embedding_model_name=embedding_model_name
+            embedding_model_name=embedding_model_name,
+            similarity_threshold=self.confidence_threshold,
         )
         
         # Retrieval Gate — blocks hallucinations

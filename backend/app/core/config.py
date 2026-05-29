@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = 200
     
     # Vector search
-    similarity_threshold: float = 0.7
+    similarity_threshold: float = 0.3
     
     # Semantic cache
     semantic_cache_threshold: float = 0.95
