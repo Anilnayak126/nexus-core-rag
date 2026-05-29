@@ -20,6 +20,9 @@ build/
 .pytest_cache/
 backend/.pytest_cache/
 
+# Uploaded documents (API writes data/ via volume mount)
+data/*.pdf
+
 # IDE
 .vscode/
 .idea/
