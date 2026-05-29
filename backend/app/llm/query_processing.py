@@ -9,9 +9,11 @@ This pipeline handles:
 """
 
 import time
+import asyncio
 import logging
 from typing import Dict, List, Optional
 import json
+import numpy as np
 from dataclasses import dataclass
 import asyncpg
 from sentence_transformers import SentenceTransformer
@@ -86,7 +88,8 @@ class QueryProcessingPipeline:
         self.vector_pipeline = VectorEmbeddingPipeline(
             db_url=db_url,
             redis_url=redis_url,
-            embedding_model_name=embedding_model_name
+            embedding_model_name=embedding_model_name,
+            similarity_threshold=self.confidence_threshold,
         )
         
         # Retrieval Gate — blocks hallucinations
@@ -140,6 +143,16 @@ class QueryProcessingPipeline:
                 top_k=5,
                 semantic_cache_threshold=0.95,
             )
+
+            # Deduplicate chunks by (filename, chunk_index) — keep highest similarity
+            seen = set()
+            deduped = []
+            for c in sorted(relevant_chunks, key=lambda x: x.similarity, reverse=True):
+                key = (c.filename, c.chunk_index)
+                if key not in seen:
+                    seen.add(key)
+                    deduped.append(c)
+            relevant_chunks = deduped
 
             # Step 2: Calculate overall confidence
             raw_confidence = self._calculate_confidence(relevant_chunks) if relevant_chunks else 0.0
@@ -210,6 +223,9 @@ class QueryProcessingPipeline:
 
             return result
 
+        except asyncio.CancelledError:
+            logger.warning("Query cancelled (reload in progress): %s", query_id)
+            raise
         except Exception as e:
             logger.error("Error processing query: %s", str(e))
             if self.mlflow:

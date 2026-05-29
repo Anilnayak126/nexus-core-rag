@@ -11,6 +11,8 @@ import logging
 from typing import Dict, List, Optional, Any
 import json
 import os
+import socket
+from urllib.parse import urlparse
 from datetime import datetime
 from app.core.config import settings
 
@@ -30,134 +32,137 @@ class MLflowClient:
             experiment_name: Experiment name (defaults to nexus_knowledge_engine)
         """
         self.tracking_uri = tracking_uri or settings.MLFLOW_TRACKING_URI
-        mlflow.set_tracking_uri(self.tracking_uri)
+        self._connected = self._check_connection()
+        if self._connected:
+            mlflow.set_tracking_uri(self.tracking_uri)
+        else:
+            logger.warning("MLflow not available at %s — telemetry disabled", self.tracking_uri)
+
         self.experiment_name = experiment_name
-        
-    def get_or_create_experiment(self, experiment_name: str = None) -> str:
-        """
-        Get or create an experiment.
-        
-        Args:
-            experiment_name: Experiment name
-            
-        Returns:
-            Experiment ID
-        """
+
+    @staticmethod
+    def _check_connection() -> bool:
+        """Quick socket check — no HTTP retries."""
+        try:
+            parsed = urlparse(settings.MLFLOW_TRACKING_URI)
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 5001
+            sock = socket.create_connection((host, port), timeout=1)
+            sock.close()
+            return True
+        except Exception:
+            return False
+
+    def _safe_call(self, fn, *args, **kwargs):
+        """Execute an MLflow call safely — skip if not connected."""
+        if not self._connected:
+            return
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            logger.debug("MLflow call skipped: %s", e)
+
+    def get_or_create_experiment(self, experiment_name: str = None) -> Optional[str]:
+        """Get or create an experiment."""
+        if not self._connected:
+            return None
         experiment_name = experiment_name or self.experiment_name
         
         try:
             experiment = mlflow.get_experiment_by_name(experiment_name)
             if experiment is None:
                 experiment_id = mlflow.create_experiment(experiment_name)
-                logger.info(f"Created new experiment: {experiment_name} (ID: {experiment_id})")
+                logger.info("Created new experiment: %s (ID: %s)", experiment_name, experiment_id)
             else:
                 experiment_id = experiment.experiment_id
-                logger.info(f"Using existing experiment: {experiment_name} (ID: {experiment_id})")
+                logger.info("Using existing experiment: %s (ID: %s)", experiment_name, experiment_id)
             
             return experiment_id
             
         except Exception as e:
-            logger.error(f"Error getting/creating experiment: {str(e)}")
-            raise
+            logger.debug("MLflow experiment error: %s", e)
+            return None
     
-    def start_run(self, run_name: str = None, experiment_name: str = None) -> mlflow.ActiveRun:
-        """
-        Start an MLflow run.
-        
-        Args:
-            run_name: Run name
-            experiment_name: Experiment name
-            
-        Returns:
-            Active run context
-        """
+    def start_run(self, run_name: str = None, experiment_name: str = None):
+        """Start an MLflow run."""
+        if not self._connected:
+            return None
         experiment_id = self.get_or_create_experiment(experiment_name)
+        if not experiment_id:
+            return None
         
         try:
             run = mlflow.start_run(
                 experiment_id=experiment_id,
                 run_name=run_name,
-                tags={
-                    "project": "nexus",
-                    "created_at": datetime.now().isoformat()
-                }
+                tags={"project": "nexus", "created_at": datetime.now().isoformat()}
             )
-            
-            logger.info(f"Started MLflow run: {run.info.run_name} (ID: {run.info.run_id})")
             return run
-            
         except Exception as e:
-            logger.error(f"Error starting MLflow run: {str(e)}")
-            raise
+            logger.debug("MLflow start_run skipped: %s", e)
+            return None
     
     def log_document_processing(self, filename: str, file_size: int, chunks_processed: int):
-        """
-        Log document processing metrics.
-        
-        Args:
-            filename: Document filename
-            file_size: File size in bytes
-            chunks_processed: Number of chunks processed
-        """
-        with self.start_run(f"document_processing_{filename.replace('.', '_')}") as run:
+        """Log document processing metrics."""
+        if not self._connected:
+            return
+        run = self.start_run(f"document_processing_{filename.replace('.', '_')}")
+        if not run:
+            return
+        try:
             mlflow.log_param("filename", filename)
             mlflow.log_param("file_size", file_size)
             mlflow.log_metric("chunks_processed", chunks_processed)
-            mlflow.log_metric("processing_efficiency", chunks_processed / (file_size / 1024))  # chunks per KB
+            mlflow.log_metric("processing_efficiency", chunks_processed / (file_size / 1024))
+        finally:
+            mlflow.end_run()
             
     def log_query_metrics(self, query: str, response_time: float, confidence: float, 
                          sources_count: int, error: bool = False):
-        """
-        Log query metrics.
-        
-        Args:
-            query: User query
-            response_time: Response time in seconds
-            confidence: Confidence score
-            sources_count: Number of sources used
-            error: Whether the query resulted in an error
-        """
-        with self.start_run(f"query_{hash(query)}") as run:
+        """Log query metrics."""
+        if not self._connected:
+            return
+        run = self.start_run(f"query_{hash(query)}")
+        if not run:
+            return
+        try:
             mlflow.log_param("query_length", len(query))
             mlflow.log_param("query_words", len(query.split()))
             mlflow.log_metric("response_time", response_time)
             mlflow.log_metric("confidence", confidence)
             mlflow.log_metric("sources_count", sources_count)
             mlflow.log_metric("error", int(error))
-            
-            # Log query category based on keywords
-            query_categories = ["factual", "comparison", "procedural", "explanatory"]
             mlflow.log_param("query_category", self._categorize_query(query))
+        finally:
+            mlflow.end_run()
     
     def log_retrieval_gate_event(self, query: str, confidence: float,
                                   threshold: float, reason: str):
-        """
-        Log a retrieval gate block event.
-
-        Args:
-            query: The query that was blocked
-            confidence: The confidence score that failed the gate
-            threshold: The minimum confidence threshold
-            reason: Why the gate blocked the query
-        """
-        with self.start_run("retrieval_gate_blocked") as run:
+        """Log a retrieval gate block event."""
+        if not self._connected:
+            return
+        run = self.start_run("retrieval_gate_blocked")
+        if not run:
+            return
+        try:
             mlflow.log_param("query_length", len(query))
             mlflow.log_param("query_words", len(query.split()))
             mlflow.log_metric("gate_confidence", confidence)
             mlflow.log_param("gate_threshold", threshold)
             mlflow.log_param("gate_reason", reason)
+        finally:
+            mlflow.end_run()
 
     def log_evaluation_metrics(self, evaluation_name: str, metrics: Dict[str, float]):
-        """
-        Log evaluation metrics.
-        
-        Args:
-            evaluation_name: Evaluation name
-            metrics: Dictionary of metrics
-        """
-        with self.start_run(f"evaluation_{evaluation_name}") as run:
+        """Log evaluation metrics."""
+        run = self.start_run(f"evaluation_{evaluation_name}")
+        if not run:
+            return
+        try:
             for key, value in metrics.items():
                 mlflow.log_metric(key, value)
+        finally:
+            mlflow.end_run()
     
     def log_model_performance(self, model_name: str, performance_metrics: Dict[str, float]):
         """
@@ -173,36 +178,31 @@ class MLflowClient:
     
     def log_embedding_generation(self, text_length: int, embedding_time: float, 
                                embedding_dimension: int):
-        """
-        Log embedding generation metrics.
-        
-        Args:
-            text_length: Length of input text
-            embedding_time: Time taken to generate embedding
-            embedding_dimension: Dimension of embedding vector
-        """
-        with self.start_run("embedding_generation") as run:
+        """Log embedding generation metrics."""
+        run = self.start_run("embedding_generation")
+        if not run:
+            return
+        try:
             mlflow.log_param("text_length", text_length)
             mlflow.log_metric("embedding_time", embedding_time)
             mlflow.log_param("embedding_dimension", embedding_dimension)
             mlflow.log_metric("tokens_per_second", text_length / embedding_time)
+        finally:
+            mlflow.end_run()
     
     def log_system_metrics(self, total_queries: int, average_response_time: float,
                           error_rate: float, active_documents: int):
-        """
-        Log system-wide metrics.
-        
-        Args:
-            total_queries: Total number of queries
-            average_response_time: Average response time
-            error_rate: Error rate
-            active_documents: Number of active documents
-        """
-        with self.start_run("system_metrics") as run:
+        """Log system-wide metrics."""
+        run = self.start_run("system_metrics")
+        if not run:
+            return
+        try:
             mlflow.log_metric("total_queries", total_queries)
             mlflow.log_metric("average_response_time", average_response_time)
             mlflow.log_metric("error_rate", error_rate)
             mlflow.log_metric("active_documents", active_documents)
+        finally:
+            mlflow.end_run()
     
     def save_model(self, model, model_name: str, artifact_path: str = None):
         """
