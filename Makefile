@@ -1,16 +1,9 @@
-.PHONY: up-dev up-team down-dev down-team dev-up dev-down team-up team-down logs-dev logs-team up dev-seed dev-bootstrap
+.PHONY: up-dev up-team down-dev down-team dev-up dev-down team-up team-down logs-dev logs-team up dev-seed dev-bootstrap test eval build-prod deploy
 
 # DEV ENVIRONMENT — full bootstrap (build + start + seed dev/CI demo data).
-# Use this for first-time setup or after a `make dev-down`. Containers will
-# be wiped clean. On first boot the Postgres container auto-applies
-# init_db.sql (mounted into /docker-entrypoint-initdb.d/) — the complete
-# schema plus the clean production seed. Then `dev-seed` layers the dev/CI
-# demo data (users, requisitions, plates, etc.) plus the RBAC role grants
-# from migrations/seed_test_data.sql so the UI has meaningful data to test.
 dev-up: dev-bootstrap
 
-# Internal target — orchestrates the full first-run bootstrap. End users
-# call `make dev-up` (above) which depends on this.
+# Internal target — orchestrates the full first-run bootstrap.
 dev-bootstrap:
 	@echo "▶ Building images & starting containers..."
 	docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build
@@ -30,11 +23,6 @@ dev-bootstrap:
 	@echo "   API docs  → http://localhost:8002/docs"
 	@echo "   pgAdmin   → http://localhost:5051"
 	@echo "   Redis     → http://localhost:6380"
-	@echo "   Login     → admin / password"
-	@echo ""
-	@echo "Next: start the frontend in a separate shell:"
-	@echo "   cd ../frontend && npm install && npm run dev"
-	@echo "   then open http://localhost:5173"
 
 dev-down:
 	docker compose -f docker-compose.dev.yml --env-file .env.dev down -v
@@ -94,3 +82,28 @@ logs-dev:
 
 logs-team:
 	docker compose -f docker-compose.yml logs -f
+
+
+# ============================================================
+# PHASE 3 — CI/CD & MLOps
+# ============================================================
+
+# Run pytest suite against a running dev stack
+test:
+	@echo "▶ Running pytest..."
+	cd backend && python -m pytest tests/ -v --tb=short
+
+# Run golden dataset evaluation against a running dev stack
+eval:
+	@echo "▶ Running golden dataset evaluation..."
+	python backend/scripts/run_evaluation.py
+
+# Build the multi-stage production image
+build-prod:
+	@echo "▶ Building production image (multi-stage)..."
+	docker build -f backend/Dockerfile.prod -t nexus-api:latest backend/
+
+# Deploy to AWS ECS (requires AWS CLI + ECR + ECS configured)
+deploy:
+	@echo "▶ Deploying to AWS..."
+	bash scripts/deploy.sh
