@@ -11,6 +11,8 @@ import logging
 from typing import Dict, List, Optional, Any
 import json
 import os
+import socket
+from urllib.parse import urlparse
 from datetime import datetime
 from app.core.config import settings
 
@@ -30,16 +32,26 @@ class MLflowClient:
             experiment_name: Experiment name (defaults to nexus_knowledge_engine)
         """
         self.tracking_uri = tracking_uri or settings.MLFLOW_TRACKING_URI
-        self._connected = False
-        try:
+        self._connected = self._check_connection()
+        if self._connected:
             mlflow.set_tracking_uri(self.tracking_uri)
-            # Test connection
-            mlflow.get_experiment_by_name("_test_connection")
-            self._connected = True
-        except Exception as e:
-            logger.warning("MLflow not available at %s: %s", self.tracking_uri, e)
+        else:
+            logger.warning("MLflow not available at %s — telemetry disabled", self.tracking_uri)
 
         self.experiment_name = experiment_name
+
+    @staticmethod
+    def _check_connection() -> bool:
+        """Quick socket check — no HTTP retries."""
+        try:
+            parsed = urlparse(settings.MLFLOW_TRACKING_URI)
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 5001
+            sock = socket.create_connection((host, port), timeout=1)
+            sock.close()
+            return True
+        except Exception:
+            return False
 
     def _safe_call(self, fn, *args, **kwargs):
         """Execute an MLflow call safely — skip if not connected."""
