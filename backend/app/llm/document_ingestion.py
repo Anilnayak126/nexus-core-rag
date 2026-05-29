@@ -101,6 +101,10 @@ class DocumentIngestionPipeline:
                 ON document_chunks 
                 USING hnsw (embedding vector_cosine_ops)
             """)
+            await conn.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_filename 
+                ON documents(filename)
+            """)
     
     async def process_document(self, file_path: str) -> Dict:
         """
@@ -149,6 +153,13 @@ class DocumentIngestionPipeline:
             logger.error(f"Error extracting text from {file_path}: {str(e)}")
             raise
         
+        # Clean non-printable and replacement characters
+        text = "".join(
+            ch if ch.isprintable() and ch not in "\ufffd\ufffe\uffff" else " "
+            for ch in text
+        )
+        # Collapse multiple spaces into one
+        text = " ".join(text.split())
         return text
     
     def _create_chunks(self, text: str) -> List[str]:
@@ -169,16 +180,26 @@ class DocumentIngestionPipeline:
             file_size = os.path.getsize(file_path)
             filename = os.path.basename(file_path)
             
-            # Insert document record
+            # Insert document record (upsert on filename)
             doc_id = await conn.fetchval(
                 """
                 INSERT INTO documents (filename, file_path, file_size, processed_at)
                 VALUES ($1, $2, $3, NOW())
+                ON CONFLICT (filename) DO UPDATE SET
+                    file_path = EXCLUDED.file_path,
+                    file_size = EXCLUDED.file_size,
+                    processed_at = NOW()
                 RETURNING id
                 """,
                 filename,
                 file_path,
                 file_size
+            )
+            
+            # Delete old chunks for this document before inserting new ones
+            await conn.execute(
+                "DELETE FROM document_chunks WHERE document_id = $1",
+                doc_id
             )
             
             # Insert chunks

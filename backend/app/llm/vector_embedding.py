@@ -226,11 +226,12 @@ class VectorEmbeddingPipeline:
                 SearchResult(
                     content=row["content"],
                     filename=row["filename"],
-                    similarity=float(row["similarity"]),
+                    similarity=float(row["similarity"]) if row["similarity"] is not None else 0.0,
                     chunk_index=row["chunk_index"]
                 )
                 for row in results
-                if float(row["similarity"]) >= self.similarity_threshold
+                if row["similarity"] is not None
+                and float(row["similarity"]) >= self.similarity_threshold
             ]
             
             return filtered_results

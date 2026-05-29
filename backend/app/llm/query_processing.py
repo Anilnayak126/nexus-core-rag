@@ -144,6 +144,16 @@ class QueryProcessingPipeline:
                 semantic_cache_threshold=0.95,
             )
 
+            # Deduplicate chunks by (filename, chunk_index) — keep highest similarity
+            seen = set()
+            deduped = []
+            for c in sorted(relevant_chunks, key=lambda x: x.similarity, reverse=True):
+                key = (c.filename, c.chunk_index)
+                if key not in seen:
+                    seen.add(key)
+                    deduped.append(c)
+            relevant_chunks = deduped
+
             # Step 2: Calculate overall confidence
             raw_confidence = self._calculate_confidence(relevant_chunks) if relevant_chunks else 0.0
 
