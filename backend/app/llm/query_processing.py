@@ -15,12 +15,10 @@ from typing import Dict, List, Optional
 import json
 import numpy as np
 from dataclasses import dataclass
-import asyncpg
 from sentence_transformers import SentenceTransformer
 from .vector_embedding import VectorEmbeddingPipeline
 from .retrieval_gate import RetrievalGate, GateDecision
 import redis.asyncio as redis
-from langchain.prompts import PromptTemplate
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -249,53 +247,7 @@ class QueryProcessingPipeline:
         Returns:
             Generated answer
         """
-        # Format context
-        context = "\n\n".join([
-            f"Source {i+1} ({chunk.filename}):\n{chunk.content}"
-            for i, chunk in enumerate(chunks)
-        ])
-        
-        # Create prompt
-        prompt = self._create_prompt(query, context)
-        
-        # Here you would integrate with your LLM service
-        # For demonstration, we'll return a formatted response
         return self._format_llm_response(query, chunks)
-    
-    def _create_prompt(self, query: str, context: str) -> str:
-        """
-        Create prompt for LLM using LangChain PromptTemplate.
-
-        Args:
-            query: User query
-            context: Retrieved context
-
-        Returns:
-            Formatted prompt
-        """
-        template = PromptTemplate(
-            input_variables=["context", "query", "max_tokens"],
-            template="""You are a helpful AI assistant answering questions based on the provided context.
-
-Context:
-{context}
-
-Question: {query}
-
-Instructions:
-1. Provide a concise and accurate answer based only on the context provided
-2. If the context doesn't contain enough information, say "I don't have enough information to answer this question"
-3. Cite the sources you use in your answer
-4. Keep your answer under {max_tokens} tokens
-
-Answer:""",
-        )
-
-        return template.format(
-            context=context,
-            query=query,
-            max_tokens=self.max_tokens,
-        )
     
     def _format_llm_response(self, query: str, chunks: List) -> str:
         """

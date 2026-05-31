@@ -1,0 +1,170 @@
+{
+  "description": "Golden dataset for evaluating Nexus RAG accuracy",
+  "version": "1.0.0",
+  "created_at": "2026-05-29",
+  "evaluation_params": {
+    "answer_similarity_threshold": 0.8,
+    "retrieval_accuracy_threshold": 0.75,
+    "gate_accuracy_threshold": 1.0,
+    "max_response_time_ms": 500
+  },
+  "test_cases": [
+    {
+      "id": "tc-001",
+      "category": "exact_match",
+      "question": "What is the Nexus Knowledge Engine?",
+      "expected_answer_contains": ["RAG system", "enterprise knowledge retrieval"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["smoke", "core"]
+    },
+    {
+      "id": "tc-002",
+      "category": "exact_match",
+      "question": "What endpoints does the API reference document?",
+      "expected_answer_contains": ["/documents/upload", "/query", "/health"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["smoke", "core"]
+    },
+    {
+      "id": "tc-003",
+      "category": "exact_match",
+      "question": "What architecture does the system use?",
+      "expected_answer_contains": ["microservices", "PostgreSQL", "pgvector", "Redis"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["smoke", "core"]
+    },
+    {
+      "id": "tc-004",
+      "category": "exact_match",
+      "question": "What are the key features of the Nexus Knowledge Engine?",
+      "expected_answer_contains": [
+        "Document processing",
+        "PDF text extraction",
+        "Vector embeddings",
+        "sentence-transformers",
+        "Retrieval Gate",
+        "MLflow"
+      ],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["core"]
+    },
+    {
+      "id": "tc-005",
+      "category": "semantic_similar",
+      "question": "Tell me about the document ingestion and chunking system",
+      "expected_answer_contains": ["sliding window", "chunking", "PDF text extraction"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["semantic"]
+    },
+    {
+      "id": "tc-006",
+      "category": "semantic_similar",
+      "question": "How does the system handle vector search?",
+      "expected_answer_contains": ["cosine similarity", "pgvector", "HNSW"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["semantic"]
+    },
+    {
+      "id": "tc-007",
+      "category": "semantic_similar",
+      "question": "What caching mechanism does the RAG pipeline use?",
+      "expected_answer_contains": ["Redis", "semantic caching"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["semantic"]
+    },
+    {
+      "id": "tc-008",
+      "category": "semantic_similar",
+      "question": "Explain the telemetry and monitoring setup",
+      "expected_answer_contains": ["MLflow", "latency", "confidence"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["semantic"]
+    },
+    {
+      "id": "tc-009",
+      "category": "no_context",
+      "question": "What is the weather in Tokyo?",
+      "expected_answer_contains": ["No relevant context"],
+      "expected_sources": 0,
+      "expected_gate_blocked": true,
+      "min_confidence": 0.0,
+      "tags": ["gate", "safety"]
+    },
+    {
+      "id": "tc-010",
+      "category": "no_context",
+      "question": "Who won the World Cup in 2022?",
+      "expected_answer_contains": ["No relevant context"],
+      "expected_sources": 0,
+      "expected_gate_blocked": true,
+      "min_confidence": 0.0,
+      "tags": ["gate", "safety"]
+    },
+    {
+      "id": "tc-011",
+      "category": "no_context",
+      "question": "What is the capital of France?",
+      "expected_answer_contains": ["No relevant context"],
+      "expected_sources": 0,
+      "expected_gate_blocked": true,
+      "min_confidence": 0.0,
+      "tags": ["gate", "safety"]
+    },
+    {
+      "id": "tc-012",
+      "category": "edge_case",
+      "question": "",
+      "expected_answer_contains": [],
+      "expected_sources": 0,
+      "expected_gate_blocked": true,
+      "min_confidence": 0.0,
+      "tags": ["edge"]
+    },
+    {
+      "id": "tc-013",
+      "category": "edge_case",
+      "question": "a",
+      "expected_answer_contains": [],
+      "expected_sources": 0,
+      "expected_gate_blocked": true,
+      "min_confidence": 0.0,
+      "tags": ["edge"]
+    },
+    {
+      "id": "tc-014",
+      "category": "edge_case",
+      "question": "Nexus",
+      "expected_answer_contains": ["Nexus"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["edge"]
+    },
+    {
+      "id": "tc-015",
+      "category": "mixed",
+      "question": "What does the Nexus platform provide?",
+      "expected_answer_contains": ["unified API", "document ingestion", "vector search", "LLM-powered query"],
+      "expected_sources": 1,
+      "expected_gate_blocked": false,
+      "min_confidence": 0.5,
+      "tags": ["regression"]
+    }
+  ]
+}

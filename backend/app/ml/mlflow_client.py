@@ -1,6 +1,6 @@
 import mlflow
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 import socket
 from urllib.parse import urlparse
 from datetime import datetime
@@ -30,14 +30,6 @@ class MLflowClient:
             return True
         except Exception:
             return False
-
-    def _safe_call(self, fn, *args, **kwargs):
-        if not self._connected:
-            return
-        try:
-            return fn(*args, **kwargs)
-        except Exception as e:
-            logger.debug("MLflow call skipped: %s", e)
 
     def get_or_create_experiment(self, experiment_name: str = None) -> Optional[str]:
         if not self._connected:
